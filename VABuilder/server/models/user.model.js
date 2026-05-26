@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
     },
     tone: {
         type: String,
-        enum: ['Friendly , Professional , Sales'],
+        enum: ['friendly , professional , sales'],
         default:'Friendly'
     },
     theme: {
@@ -83,7 +83,7 @@ const userSchema = new mongoose.Schema({
         default:'free'
     },
     requestLimit: {
-        type: number,
+        type: Number,
         default:200
     },
     proExpiresAt: {
