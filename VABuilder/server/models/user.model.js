@@ -41,13 +41,13 @@ const userSchema = new mongoose.Schema({
     },
     tone: {
         type: String,
-        enum: ['friendly , professional , sales'],
-        default:'Friendly'
+        enum: ['friendly' , 'professional' , 'sales'],
+        default:'friendly'
     },
     theme: {
         type: String,
         enum: ['light', 'dark', 'glass', 'neon'],
-        default:'dark'
+        default: 'dark'
     },
     enableVoice: {
         type: Boolean,
@@ -67,7 +67,7 @@ const userSchema = new mongoose.Schema({
     },
     geminiStatus: {
         type: String,
-        enum: ['activate', 'qouta_exceeded', 'invalid'],
+        enum: ['active', 'qouta_exceeded', 'invalid'],
         default:'active'
     },
     totalMessages: {

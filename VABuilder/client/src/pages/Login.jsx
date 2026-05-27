@@ -41,8 +41,7 @@ const Login = () => {
                 name: displayName,
                 email
             }, { withCredentials: true });
-            const data = await response.json()
-            console.log(data)
+            console.log(response.data)
             navigate('/')
         } catch (error) {
             console.log(error.message)

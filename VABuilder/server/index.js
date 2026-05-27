@@ -8,6 +8,7 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { connection } from './config/connectDB.js'
 import authRoutes from './routes/auth.route.js'
+import userRouter from './routes/user.route.js'
 
 const app = express()
 
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/user', userRouter)
 
 const PORT = process.env.PORT || 8000
 app.listen(PORT, () => {
