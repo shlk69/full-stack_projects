@@ -1,28 +1,21 @@
 import jwt from 'jsonwebtoken'
 
-
-export const isAuth = async (req, resizeBy, next) => {
+export const isAuth = async (req, res, next) => {
     try {
-        const token = req.cookies
-        if (!token) {
-            return res.status(400).json({
-                message:'Unavailable token'
-            })
-        }
-        const verifyToken = await jwt.verify(token, process.env.JWT_SECRET)
+        let token = req.cookies?.token;
 
-        if (!verifyToken) {
-            return res.status(400).json({
-                message:'Invalid or expired token'
-            })
+        if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+            token = req.headers.authorization.split(' ')[1];
         }
 
-        req.userId = verifyToken.userId
-        next()
+        if (!token || token === 'undefined' || token === 'null') {  
+            return res.status(401).json({ message: 'Unavailable token' });
+        }
+
+        const verifyToken = jwt.verify(token, process.env.JWT_SECRET);
+        req.userId = verifyToken.userId || verifyToken.id;
+        next();
     } catch (error) {
-        console.log('isAuth error :',error.message)
-        return res.status(500).json({
-            message: 'Internale server error , no token sent '
-        })
+        return res.status(401).json({ message: 'Authentication failed: ' + error.message });
     }
 }

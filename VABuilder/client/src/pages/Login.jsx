@@ -7,8 +7,9 @@ import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../utils/firebase";
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
-const Login = () => {
+const Login = ({setUser}) => {
     const navigate = useNavigate()
   const features = [
     {
@@ -33,20 +34,28 @@ const Login = () => {
     },
     ];
     
-    const handleLogin = async () => {
-        try {
-            const result = await signInWithPopup(auth, provider)
-            const { displayName, email } = result.user
-            const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/google`, {
-                name: displayName,
-                email
-            }, { withCredentials: true });
-            console.log(response.data)
-            navigate('/')
-        } catch (error) {
-            console.log(error.message)
-        }
-    }
+  const handleLogin = async () => {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const { displayName, email } = result.user;
+
+        const response = await axios.post(
+          `${import.meta.env.VITE_SERVER_URL}/api/auth/google`,
+          {
+            name: displayName,
+            email,
+          },
+          { withCredentials: true },
+        );
+        localStorage.setItem("token", response.data.token);
+        setUser(response.data.user)
+        toast.success('Logged in successfully')
+        navigate("/");
+      } catch (error) {
+        toast.error('Login failed')
+        console.log(error.message);
+      }
+    };
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-white to-emerald-50 flex items-center justify-center p-6 md:p-12 overflow-x-hidden">
       <div className="w-full max-w-7xl mx-auto">

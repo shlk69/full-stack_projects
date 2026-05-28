@@ -12,7 +12,6 @@ export const getCurrentUser = async (req, res) => {
         return res.status(200).json({
             message: 'Current user',
             user
-            
         })
     } catch (error) {
         console.error("Error fetching current user:", error.message);
