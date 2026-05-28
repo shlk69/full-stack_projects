@@ -1,63 +1,72 @@
-import React from "react";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
+import axios from "axios";
 
 const Builder = ({ user, setUser }) => {
   const THEMES = ["light", "dark", "glass", "neon"];
-
   const TONES = ["friendly", "professional", "sales"];
 
-  const [editAssistant, setEditAssistant] = useState(!user?.isSetupComplete)
+  const [editAssistant, setEditAssistant] = useState(!user?.isSetupComplete);
 
-  const [assistantName, setAssistantName] = useState(user?.assistantName || "");
-
-  const [businessName, setBusinessName] = useState(user?.businessName || "");
-
-  const [businessType, setBusinessType] = useState(user?.businessType || "");
-
-  const [businessDescription, setBusinessDescription] = useState(
-    user?.businessDescription || "",
-  );
-
-  const [theme, setTheme] = useState(user?.theme || "dark");
-  const [tone, setTone] = useState(user?.tone || "friendly");
-  const [geminiApiKey, setGeminiApiKey] = useState(user?.geminiApiKey || "");
-
-  const [pages, setPages] = useState(user?.pages || []);
+  const [assistantName, setAssistantName] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [businessType, setBusinessType] = useState("");
+  const [businessDescription, setBusinessDescription] = useState("");
+  const [theme, setTheme] = useState("dark");
+  const [tone, setTone] = useState("friendly");
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [pages, setPages] = useState([]);
 
   const [pageName, setPageName] = useState("");
-
   const [pagePath, setPagePath] = useState("");
-
   const [pageKeywords, setPageKeywords] = useState("");
 
-  const [loading, setLoading] = useState(false)
-  
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setAssistantName(user?.assistantName || "");
+      setBusinessName(user?.businessName || "");
+      setBusinessType(user?.businessType || "");
+      setBusinessDescription(user?.businessDescription || "");
+      setTheme(user?.theme || "dark");
+      setTone(user?.tone || "friendly");
+      setGeminiApiKey(user?.geminiApiKey || "");
+      setPages(user?.pages || []);
+    }
+  }, [user]);
 
   const addPages = () => {
-    if (!pageName || !pagePath) return;
+    if (!pageName || !pagePath) {
+      toast.error("Page name and path are required");
+      return;
+    }
 
     const newPage = {
       name: pageName,
       path: pagePath,
-      keywords: pageKeywords.split(",").map((k) => k.trim()),
+      keywords: pageKeywords
+        .split(",")
+        .map((k) => k.trim())
+        .filter((k) => k !== ""),
     };
 
     setPages([...pages, newPage]);
-    setPagePath("");
+
     setPageName("");
+    setPagePath("");
     setPageKeywords("");
   };
 
   const removePage = (index) => {
-    const updatePages = pages.filter((_, i) => i !== index);
-    setPages(updatePages);
+    const updatedPages = pages.filter((_, i) => i !== index);
+    setPages(updatedPages);
   };
-
 
   const saveAssistant = async () => {
     setLoading(true);
+
     try {
       const data = {
         assistantName,
@@ -71,22 +80,45 @@ const Builder = ({ user, setUser }) => {
       };
 
       const res = await axios.post(
-        `${import.meta.env.VITE_SERVER_URL}/api/user/save-assistant`, data,{
-          withCredentials:true
-        }
+        `${import.meta.env.VITE_SERVER_URL}/api/user/save-assistant`,
+        data,
+        {
+          withCredentials: true,
+        },
       );
 
-      setUser(res.data.user)
-      console.log(res.data)
-      toast.success('Assistant saved successfully')
-      setLoading(false)
+      setUser(res.data.user);
+
+      setEditAssistant(false);
+
+      toast.success("Assistant saved successfully");
     } catch (error) {
-      console.log('error while assistant creation ',error.message)
-      toast.error('Failed to save assistant')
-      setLoading(false)
+      console.log(
+        "Error while assistant creation:",
+        error?.response?.data || error.message,
+      );
+
+      toast.error("Failed to save assistant");
+    } finally {
+      setLoading(false);
     }
   };
 
+
+  const remainingMessages = Math.max(
+    0,
+    (user?.requestLimit || 0) - (user?.totalMessages || 0),
+  );
+
+
+  const remainingDays = user?.proExpiresAt
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(user.proExpiresAt) - new Date()) / (1000 * 60 * 60 * 24),
+        ),
+      )
+    : 0;
 
 
 
@@ -97,203 +129,268 @@ const Builder = ({ user, setUser }) => {
           <h2 className="text-3xl font-bold text-[#081028]">
             Assistant Builder
           </h2>
-          <p className="text-gray-500 mt-1">
-            {" "}
-            Customize your virtual assistant
-          </p>
+
+          <p className="text-gray-500 mt-1">Customize your virtual assistant</p>
         </div>
 
-       {editAssistant && <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-5">Basic Information</h2>
+        {user.isSetupComplete && !editAssistant && (
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-6">
+            <p className="text-sm text-gray-400">Assistant</p>
 
-            <div className="space-y-4">
-              <input
-                onChange={(e) => {
-                  setAssistantName(e.target.value);
-                }}
-                value={assistantName}
-                type="text"
-                placeholder="Assistant Name"
-                className="w-full border border-gray-200 rounded-2xl px-4 py-3"
-              />
+            <h2 className="text-3xl font-bold text-[#081028] mt-1">
+              {user.assistantName}
+            </h2>
 
-              <input
-                onChange={(e) => {
-                  setBusinessName(e.target.value);
-                }}
-                value={businessName}
-                type="text"
-                placeholder="Buisness Name"
-                className="w-full border border-gray-200 rounded-2xl px-4 py-3"
-              />
-
-              <input
-                onChange={(e) => {
-                  setBusinessType(e.target.value);
-                }}
-                value={businessType}
-                type="text"
-                placeholder="Buisness Type"
-                className="w-full border border-gray-200 rounded-2xl px-4 py-3"
-              />
-
-              <textarea
-                rows={4}
-                onChange={(e) => {
-                  setBusinessDescription(e.target.value);
-                }}
-                value={businessDescription}
-                placeholder="Buisnedd Description"
-                className="w-full border border-gray-200 rounded-2xl px-4 py-3 resize-none"
-              />
-            </div>
-          </div>
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-lg font-semibold mb-5">Appearance</h2>
-
-            <div>
-              <label className="text-sm text-gray-600 mb-3 block">Theme</label>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {THEMES.map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => setTheme(item)}
-                    className={`py-3 rounded-2xl border-2 capitalize ${
-                      theme === item
-                        ? "border-purple-500 bg-purple-50 text-purple-700"
-                        : "border-gray-200"
-                    }`}>
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <label className="text-sm text-gray-600 mb-3 block">Tone</label>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {TONES.map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => setTone(item)}
-                    className={`py-3 rounded-2xl border-2 capitalize ${
-                      tone === item
-                        ? "border-purple-500 bg-purple-50 text-purple-700"
-                        : "border-gray-200"
-                    }`}>
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
-              <div>
-                <h2 className="text-lg font-semibold">Gemini API KEY</h2>
-                <p className="text-sm text-gray-400 mt-1">
-                  Add your Gemini API key to power your assistant
-                </p>
-              </div>
-
-              <a
-                href="https://aistudio.google.com/app/apikey"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:scale-[1.02] transition-all cursor-pointer px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white text-sm font-medium">
-                Get API Key
-              </a>
-            </div>
-
-            <input
-              type="password"
-              placeholder="AIza..."
-              onChange={(e) => setGeminiApiKey(e.target.value)}
-              value={geminiApiKey}
-              className="w-full border border-gray-200 rounded-2xl px-4 py-3"
-            />
-            <p className="text-xs text-gray-400 mt-3 leading-6">
-              Your API key is securely stored and only used for generating AI
-              responses.
+            <p className="text-gray-500 mt-3 leading-7">
+              Your assistant is ready to use on your website.
             </p>
-          </div>
 
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
-              <div>
-                <h2 className="text-lg font-semibold">Navigation Pages</h2>
-                <p className="text-sm text-gray-400">
-                  Assistant can redirect users
-                </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+              <div className="rounded-2xl border border-gray-100 bg-[#f8fafc] p-4">
+                <p className="text-sm text-gray-400">Current Plan</p>
+                <h2 className="text-xl font-bold text-[#081028] mt-1 capitalize">
+                  {user?.plan}
+                </h2>
               </div>
 
-              <button
-                onClick={addPages}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white text-sm">
-                <FiPlus />
-                Add
-              </button>
-            </div>
+              <div className="rounded-2xl border border-gray-100 bg-[#f8fafc] p-4">
+                <p className="text-sm text-gray-400">Gemini Status</p>
+                <h2
+                  className={`text-xl font-bold mt-1 capitalize ${
+                    user?.geminiStatus === "active"
+                      ? "text-emerald-600"
+                      : user?.geminiStatus === "invalid"
+                        ? "text-red-500"
+                        : "text-amber-500"
+                  }`}>
+                  {user?.geminiStatus}
+                </h2>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <input
-                type="text"
-                placeholder="Page Name"
-                className="border border-gray-200 rounded-2xl px-4 py-3"
-                onChange={(e) => setPageName(e.target.value)}
-                value={pageName}
-              />
-
-              <input
-                type="text"
-                placeholder="/pricing"
-                className="border border-gray-200 rounded-2xl px-4 py-3"
-                onChange={(e) => setPagePath(e.target.value)}
-                value={pagePath}
-              />
-
-              <input
-                type="text"
-                placeholder="Pricing , Plan"
-                className="border border-gray-200 rounded-2xl px-4 py-3"
-                onChange={(e) => setPageKeywords(e.target.value)}
-                value={pageKeywords}
-              />
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {pages.map((page, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between border border-gray-100 rounded-2xl p-4">
-                  <div>
-                    <p className="font-medium">{page.name}</p>
-                    <p className="text-sm text-gray-400">{page.path}</p>
-                  </div>
-                  <button
-                    onClick={() => removePage(index)}
-                    className="text-red-500">
-                    <FiTrash2 />
-                  </button>
-                </div>
-              ))}
+              <div className="rounded-2xl border border-gray-100 bg-[#f8fafc] p-4">
+                <p className="text-sm text-gray-400">Current Plan</p>
+                <h2 className="text-xl font-bold text-[#081028] mt-1 capitalize">
+                  {user?.plan}
+                </h2>
+              </div>
             </div>
           </div>
+        )}
 
-          <button
-            onClick={saveAssistant}
-            disabled={loading}
-            className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
-            {loading
-              ? "Saving..."
-              : user?.isSetupComplete
-                ? "Update Assistant"
-                : "Save Assistant"}
-          </button>
-        </div>}
+        {editAssistant && (
+          <div className="space-y-6">
+            {/* BASIC INFO */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-5">Basic Information</h2>
+
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Assistant Name"
+                  value={assistantName}
+                  onChange={(e) => setAssistantName(e.target.value)}
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Business Name"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Business Type"
+                  value={businessType}
+                  onChange={(e) => setBusinessType(e.target.value)}
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3"
+                />
+
+                <textarea
+                  rows={4}
+                  placeholder="Business Description"
+                  value={businessDescription}
+                  onChange={(e) => setBusinessDescription(e.target.value)}
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 resize-none"
+                />
+              </div>
+            </div>
+
+            {/* APPEARANCE */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-5">Appearance</h2>
+
+              <div>
+                <label className="text-sm text-gray-600 mb-3 block">
+                  Theme
+                </label>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {THEMES.map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => setTheme(item)}
+                      className={`py-3 rounded-2xl border-2 capitalize transition-all ${
+                        theme === item
+                          ? "border-purple-500 bg-purple-50 text-purple-700"
+                          : "border-gray-200"
+                      }`}>
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <label className="text-sm text-gray-600 mb-3 block">Tone</label>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {TONES.map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => setTone(item)}
+                      className={`py-3 rounded-2xl border-2 capitalize transition-all ${
+                        tone === item
+                          ? "border-purple-500 bg-purple-50 text-purple-700"
+                          : "border-gray-200"
+                      }`}>
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* API KEY */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
+                <div>
+                  <h2 className="text-lg font-semibold">Gemini API Key</h2>
+
+                  <p className="text-sm text-gray-400 mt-1">
+                    Add your Gemini API key to power your assistant
+                  </p>
+                </div>
+
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:scale-[1.02] transition-all px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white text-sm font-medium">
+                  Get API Key
+                </a>
+              </div>
+
+              <input
+                type="password"
+                placeholder="AIza..."
+                value={geminiApiKey}
+                onChange={(e) => setGeminiApiKey(e.target.value)}
+                className="w-full border border-gray-200 rounded-2xl px-4 py-3"
+              />
+
+              <p className="text-xs text-gray-400 mt-3 leading-6">
+                Your API key is securely stored and only used for AI responses.
+              </p>
+            </div>
+
+            {/* PAGES */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
+                <div>
+                  <h2 className="text-lg font-semibold">Navigation Pages</h2>
+
+                  <p className="text-sm text-gray-400">
+                    Assistant can redirect users
+                  </p>
+                </div>
+
+                <button
+                  onClick={addPages}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white text-sm">
+                  <FiPlus />
+                  Add
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  placeholder="Page Name"
+                  value={pageName}
+                  onChange={(e) => setPageName(e.target.value)}
+                  className="border border-gray-200 rounded-2xl px-4 py-3"
+                />
+
+                <input
+                  type="text"
+                  placeholder="/pricing"
+                  value={pagePath}
+                  onChange={(e) => setPagePath(e.target.value)}
+                  className="border border-gray-200 rounded-2xl px-4 py-3"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Pricing, Plans"
+                  value={pageKeywords}
+                  onChange={(e) => setPageKeywords(e.target.value)}
+                  className="border border-gray-200 rounded-2xl px-4 py-3"
+                />
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {pages.length > 0 ? (
+                  pages.map((page, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between border border-gray-100 rounded-2xl p-4">
+                      <div>
+                        <p className="font-medium">{page.name}</p>
+
+                        <p className="text-sm text-gray-400">{page.path}</p>
+
+                        {page.keywords?.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {page.keywords.map((keyword, i) => (
+                              <span
+                                key={i}
+                                className="px-2 py-1 text-xs rounded-lg bg-gray-100 text-gray-600">
+                                {keyword}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => removePage(index)}
+                        className="text-red-500 hover:text-red-700">
+                        <FiTrash2 size={18} />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-400">No pages added yet</p>
+                )}
+              </div>
+            </div>
+
+            {/* SAVE BUTTON */}
+            <button
+              onClick={saveAssistant}
+              disabled={loading}
+              className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+              {loading
+                ? "Saving..."
+                : user?.isSetupComplete
+                  ? "Update Assistant"
+                  : "Save Assistant"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
