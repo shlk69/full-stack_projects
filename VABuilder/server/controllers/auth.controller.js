@@ -14,9 +14,7 @@ export const googleAuth = async (req, res) => {
             user = await User.create({
                 name,
                 email,
-                plan: "free",
-                requestLimit: 200,
-                totalMessages: 0,
+                plan: "free"
             })
         }
         const token = await genToken(user._id)

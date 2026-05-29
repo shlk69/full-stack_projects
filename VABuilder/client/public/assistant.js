@@ -5,6 +5,7 @@
     // user id
     const script = document.currentScript;
     const userId = script?.dataset?.userId;
+    let  assistantConfig = null
 
     // load css
     const link = document.createElement('link');
@@ -38,7 +39,7 @@
                 Ask anything about your website.
             </p>
 
-            <div class="va-status">Tap button to Speak</div>
+            <div class="va-status">Tap Mic to Speak</div>
 
             <div class="va-wave">
                 <span></span>
@@ -94,5 +95,47 @@
         popup.style.display = open ? "flex" : "none";
     }
 
+
+    //load assistant
+
+    const loadAssistant = async () => {
+        try {
+            const res = await fetch(`http://localhost:8000/api/assistant/config/${userId}`)
+
+            const data = await res.json()
+            console.log("config data ",data)
+
+            if (data) {
+                assistantConfig = data.user
+                applyConfig()
+            }
+        } catch (error) {
+            console.log('frontend error config : ', error.message)
+        }
+    }
+
+    const applyConfig = () => {
+        if (!assistantConfig) return
+        popup.className = `va-popup theme-${assistantConfig.theme}`;
+        button.className = `va-btn theme-${assistantConfig.theme}`
+
+        const title = popup.querySelector('.va-title')
+        title.innerHTML = `Hello! I'm ${assistantConfig.assistantName}`
+
+        const subTitle = popup.querySelector('.va-sub')
+        subTitle.innerHTML = `
+Welcome to 
+${assistantConfig?.businessName || 'our business'}.
+<br />
+Ask anything about your website.
+`;
+
+
+    }
+    
+
+
+
+    loadAssistant()
 
 })();

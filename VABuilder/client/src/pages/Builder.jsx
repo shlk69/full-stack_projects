@@ -10,9 +10,9 @@ const Builder = ({ user, setUser }) => {
   const [editAssistant, setEditAssistant] = useState(!user?.isSetupComplete);
 
   const [assistantName, setAssistantName] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [businessType, setBusinessType] = useState("");
-  const [businessDescription, setBusinessDescription] = useState("");
+  const [buisnessName, setBuisnessName] = useState("");
+  const [buisnessType, setBuisnessType] = useState("");
+  const [buisnessDescription, setBuisnessDescription] = useState("");
   const [theme, setTheme] = useState("dark");
   const [tone, setTone] = useState("friendly");
   const [geminiApiKey, setGeminiApiKey] = useState("");
@@ -29,9 +29,9 @@ const Builder = ({ user, setUser }) => {
   useEffect(() => {
     if (user) {
       setAssistantName(user?.assistantName || "");
-      setBusinessName(user?.businessName || "");
-      setBusinessType(user?.businessType || "");
-      setBusinessDescription(user?.businessDescription || "");
+      setBuisnessName(user?.buisnessName || "");
+      setBuisnessType(user?.buisnessType || "");
+      setBuisnessDescription(user?.buisnessDescription || "");
       setTheme(user?.theme || "dark");
       setTone(user?.tone || "friendly");
       setGeminiApiKey(user?.geminiApiKey || "");
@@ -72,9 +72,9 @@ const Builder = ({ user, setUser }) => {
     try {
       const data = {
         assistantName,
-        businessName,
-        businessType,
-        businessDescription,
+        buisnessName,
+        buisnessType,
+        buisnessDescription,
         tone,
         theme,
         geminiApiKey,
@@ -262,32 +262,32 @@ const Builder = ({ user, setUser }) => {
                 <input
                   type="text"
                   placeholder="Assistant Name"
-                  value={assistantName}
                   onChange={(e) => setAssistantName(e.target.value)}
+                  value={assistantName}
                   className="w-full border border-gray-200 rounded-2xl px-4 py-3"
                 />
 
                 <input
                   type="text"
-                  placeholder="Business Name"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
+                  placeholder="buisness Name"
+                  onChange={(e) => setBuisnessName(e.target.value)}
+                  value={buisnessName}
                   className="w-full border border-gray-200 rounded-2xl px-4 py-3"
                 />
 
                 <input
                   type="text"
-                  placeholder="Business Type"
-                  value={businessType}
-                  onChange={(e) => setBusinessType(e.target.value)}
+                  placeholder="buisness Type"
+                  onChange={(e) => setBuisnessType(e.target.value)}
+                  value={buisnessType}
                   className="w-full border border-gray-200 rounded-2xl px-4 py-3"
                 />
 
                 <textarea
                   rows={4}
-                  placeholder="Business Description"
-                  value={businessDescription}
-                  onChange={(e) => setBusinessDescription(e.target.value)}
+                  placeholder="buisness Description"
+                  value={buisnessDescription}
+                  onChange={(e) => setBuisnessDescription(e.target.value)}
                   className="w-full border border-gray-200 rounded-2xl px-4 py-3 resize-none"
                 />
               </div>

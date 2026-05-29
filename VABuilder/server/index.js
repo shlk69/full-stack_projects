@@ -9,13 +9,26 @@ import cookieParser from 'cookie-parser'
 import { connection } from './config/connectDB.js'
 import authRoutes from './routes/auth.route.js'
 import userRouter from './routes/user.route.js'
+import assistantRouter from './routes/assistant.route.js'
 
 const app = express()
 
-app.use(cors({
-    origin: process.env.DOMAIN_URL || 'http://localhost:5173',
-    credentials: true
-}))
+const privateCors =
+    cors({
+
+        origin: [
+            "http://localhost:5173"
+        ],
+
+        credentials: true
+
+    });
+
+const publicCors =
+    cors({
+        origin: "*",
+    });
+
 
 app.use(express.json())
 app.use(cookieParser())
@@ -24,8 +37,9 @@ app.get('/', (req, res) => {
     res.json('VABuilder is here buddy!')
 })
 
-app.use('/api/auth', authRoutes)
-app.use('/api/user', userRouter)
+app.use('/api/auth',privateCors, authRoutes)
+app.use('/api/user',privateCors, userRouter)
+app.use('/api/assistant',publicCors, assistantRouter)
 
 const PORT = process.env.PORT || 8000
 app.listen(PORT, () => {

@@ -23,9 +23,9 @@ export const saveAssistant = async (req, res) => {
     try {
         const {
             assistantName,
-            businessName,
-            businessType,
-            businessDescription,
+            buisnessName,
+            buisnessType,
+            buisnessDescription,
             tone,
             theme,
             geminiApiKey,
@@ -37,9 +37,9 @@ export const saveAssistant = async (req, res) => {
             return res.status(404).json({ message: "Failed to get user" })
         }
         user.assistantName = assistantName;
-        user.businessName = businessName;
-        user.businessType = businessType;
-        user.businessDescription = businessDescription;
+        user.buisnessName = buisnessName;
+        user.buisnessType = buisnessType;
+        user.buisnessDescription = buisnessDescription;
         user.tone = tone;
         user.theme = theme;
 
