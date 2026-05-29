@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiCopy, FiPlus, FiTrash2,FiCheck } from "react-icons/fi";
 import axios from "axios";
 
 const Builder = ({ user, setUser }) => {
@@ -23,6 +23,8 @@ const Builder = ({ user, setUser }) => {
   const [pageKeywords, setPageKeywords] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
 
   useEffect(() => {
     if (user) {
@@ -88,7 +90,7 @@ const Builder = ({ user, setUser }) => {
       );
 
       setUser(res.data.user);
-
+      console.log(res.data.user)
       setEditAssistant(false);
 
       toast.success("Assistant saved successfully");
@@ -103,6 +105,9 @@ const Builder = ({ user, setUser }) => {
       setLoading(false);
     }
   };
+
+  const embedCode = `<script src="${import.meta.env.VITE_CLIENT_URL}/assistantjs" data-user-id="${user?._id}"></script>`;
+
 
 
   const remainingMessages = Math.max(
@@ -119,8 +124,6 @@ const Builder = ({ user, setUser }) => {
         ),
       )
     : 0;
-
-
 
   return (
     <div className="min-h-screen bg-[#f7f8fc] px-4 py-8">
@@ -168,12 +171,84 @@ const Builder = ({ user, setUser }) => {
               </div>
 
               <div className="rounded-2xl border border-gray-100 bg-[#f8fafc] p-4">
-                <p className="text-sm text-gray-400">Current Plan</p>
+                <p className="text-sm text-gray-400">
+                  {user?.plan === "free" ? "Messages Left" : "Plan Expiry"}
+                </p>
+
                 <h2 className="text-xl font-bold text-[#081028] mt-1 capitalize">
-                  {user?.plan}
+                  {user?.plan === "free"
+                    ? remainingMessages
+                    : `${remainingDays} Days`}
                 </h2>
               </div>
             </div>
+
+            <div className="mt-6">
+              <div className="mt-4 rounded-2xl bg-amber-50 border border-amber-200 p-4">
+                <p className="text-sm font-semibold text-amber-900">
+                  Where to paste this script?
+                </p>
+                <p className="text-sm text-amber-700 mt-2 leading-6">
+                  Paste this script before the closing{" "}
+                  <span className="font-semibold">{"</body>"}</span> tag of your
+                  website HTML file.
+                  <br />
+                  <br />
+                  Example:
+                </p>
+
+                <pre className="mt-3 bg-[#0b1020] text-emerald-400 rounded-xl p-3 text-xs font-mono overflow-x-auto">
+                  {`<body>
+
+  Your Website Content
+
+  <script src="${import.meta.env.VITE_CLIENT_URL}/assistant.js" data-user-id="${user?._id}"></script>
+
+</body>`}
+                </pre>
+              </div>
+              <p className="text-sm mt-3 font-medium text-[#081028] mb-3">
+                {" "}
+                Embed Code
+              </p>
+            </div>
+            <div className="relative">
+              <textarea
+                readOnly
+                value={embedCode}
+                className="w-full h-20 bg-[#0b1020] text-emerald-400 rounded-2xl p-4 text-sm font-mono resize-none outline-none  overflow-x-auto"
+              />
+
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(embedCode);
+                    toast.success("Script Copied");
+
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  } catch (error) {
+                    toast.error("Failed to copy");
+                  }
+                }}
+                className={`absolute top-4 right-4 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 border ${
+                  copied
+                    ? "bg-emerald-500 text-white border-emerald-500 scale-105"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 active:scale-95"
+                }`}>
+                {copied ? (
+                  <FiCheck className="w-5 h-5" />
+                ) : (
+                  <FiCopy className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+
+            <button
+              onClick={() => setEditAssistant(true)}
+              className="mt-6 h-12 px-6 rounded-2xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white font-medium">
+              Edit Assistant
+            </button>
           </div>
         )}
 

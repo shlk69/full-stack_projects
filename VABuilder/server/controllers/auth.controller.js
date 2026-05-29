@@ -11,7 +11,13 @@ export const googleAuth = async (req, res) => {
         }
         let user = await User.findOne({ email })
         if (!user) {
-            user = await User.create({ name, email })
+            user = await User.create({
+                name,
+                email,
+                plan: "free",
+                requestLimit: 200,
+                totalMessages: 0,
+            })
         }
         const token = await genToken(user._id)
         res.cookie("token", token, {
