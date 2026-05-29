@@ -106,7 +106,7 @@ const Builder = ({ user, setUser }) => {
     }
   };
 
-  const embedCode = `<script src="${import.meta.env.VITE_CLIENT_URL}/assistantjs" data-user-id="${user?._id}"></script>`;
+  const embedCode = `<script src="${import.meta.env.VITE_CLIENT_URL}/assistant.js" data-user-id="${user?._id}"></script>`;
 
 
 

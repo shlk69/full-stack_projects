@@ -1,0 +1,548 @@
+
+
+.va-popup {
+  position: fixed;
+  right: 18px;
+  bottom: 98px;
+
+  width: 360px;
+  min-width: 360px;
+  max-width: 360px;
+  height: 580px;
+  min-height: 580px;
+  max-height: 580px;
+
+  border-radius: 38px;
+  overflow: hidden;
+
+  z-index: 999999;
+  display: none; 
+
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.32);
+}
+
+.va-btn {
+  position: fixed;
+  right: 18px;
+  bottom: 20px;
+  
+  width: 60px;
+  height: 60px;
+  
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  padding: 0;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  transition: transform 0.2s ease;
+  
+}
+
+.va-btn:hover {
+  transform: scale(1.05);
+}
+
+.va-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; 
+}
+
+
+
+
+.va-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.va-content {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  height: 100%;
+
+  padding: 24px 20px 20px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.va-top {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+
+.va-orb-wrap {
+  position: relative;
+  margin-top: 2px;
+}
+
+.va-orb-glow {
+  position: absolute;
+  inset: 0;
+  transform: scale(1.8);
+  border-radius: 999px;
+  filter: blur(75px);
+  opacity: 0.6;
+}
+
+.va-orb {
+  position: relative;
+  width: 118px;
+  height: 118px;
+  border-radius: 999px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.va-title {
+  margin-top: 14px;
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+  text-align: center;
+}
+
+.va-sub {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+
+.va-status {
+  margin-top: 18px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.va-wave {
+  margin-top: 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 38px;
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.va-wave.active {
+  opacity: 1;
+}
+
+.va-wave span {
+  width: 5px;
+  border-radius: 999px;
+  transform-origin: bottom;
+  animation: wave 1.2s infinite ease-in-out;
+}
+
+.va-wave span:nth-child(1) { height: 14px; animation-delay: 0.1s; }
+.va-wave span:nth-child(2) { height: 28px; animation-delay: 0.3s; }
+.va-wave span:nth-child(3) { height: 16px; animation-delay: 0.6s; }
+.va-wave span:nth-child(4) { height: 34px; animation-delay: 0.2s; }
+.va-wave span:nth-child(5) { height: 20px; animation-delay: 0.4s; }
+.va-wave span:nth-child(6) { height: 12px; animation-delay: 0.5s; }
+
+@keyframes wave {
+  0% { opacity: 0.4; transform: scaleY(0.8); }
+  50% { opacity: 1; transform: scaleY(1.2); }
+  100% { opacity: 0.4; transform: scaleY(0.8); }
+}
+
+
+
+.va-user-text {
+  margin-top: 10px;
+  min-height: 20px;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  font-weight: 600;
+}
+
+.va-ai-text {
+  margin-top: 2px;
+  min-height: 18px;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  opacity: 0.82;
+}
+
+.va-bottom {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.va-mic {
+  position: relative;
+  z-index: 2;
+  width: 74px;
+  height: 74px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+  animation: micFloat 2.5s infinite ease-in-out;
+}
+
+.va-mic:hover {
+  transform: scale(1.06) !important; /
+}
+
+@keyframes micFloat {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}
+
+.va-mic-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+
+
+.theme-dark {
+  background: #050816;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .va-overlay {
+  background: radial-gradient(circle at top, rgba(168, 85, 247, 0.18), transparent 45%);
+}
+
+.theme-dark .va-orb,
+.theme-dark .va-orb-glow {
+  background: linear-gradient(135deg, #4cc9ff, #7c3aed, #ec4899);
+}
+
+.theme-dark .va-title {
+  color: white;
+}
+
+.theme-dark .va-sub {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.theme-dark .va-status {
+  color: #22e3a6;
+}
+
+.theme-dark .va-wave span {
+  background: #22e3a6;
+}
+
+.theme-dark .va-user-text {
+  color: white;
+}
+
+.theme-dark .va-ai-text {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.theme-dark .va-mic,
+.theme-dark .va-btn {
+  background: linear-gradient(135deg, #7c3aed, #4f8cff);
+  box-shadow: 
+    0 0 35px rgba(124, 58, 237, 0.55),
+    0 0 90px rgba(79, 140, 255, 0.38),
+    0 0 140px rgba(124, 58, 237, 0.22);
+}
+
+
+/* light */
+
+.theme-light {
+  background: 
+    linear-gradient(
+      135deg,
+      #ffffff,
+      #eef6ff
+    );
+  border: 1px solid #dbeafe;
+}
+
+.theme-light .va-overlay {
+  background: 
+    radial-gradient(
+      circle at top,
+      rgba(59, 130, 246, .12),
+      transparent 45%
+    );
+}
+
+
+.theme-light .va-orb,
+.theme-light .va-orb-glow {
+  background: 
+    linear-gradient(
+      135deg,
+      #7dd3fc,
+      #67e8f9,
+      #f5d0fe
+    );
+}
+
+.theme-light .va-title {
+  color: #081028;
+}
+
+.theme-light .va-sub {
+  color: #475569;
+}
+
+
+.theme-light .va-status {
+  color: #3b82f6;
+}
+
+.theme-light .va-wave span {
+  background: #60a5fa;
+}
+
+.theme-light .va-user-text {
+  color: #081028;
+}
+
+.theme-light .va-ai-text {
+  color: #475569;
+}
+
+
+.theme-light .va-mic,
+.theme-light .va-btn {
+  background: 
+    linear-gradient(
+      135deg,
+      #60a5fa,
+      #06b6d4
+    );
+
+  /* Large soft glow */
+  box-shadow:
+    0 0 30px rgba(59, 130, 246, .38),
+    0 0 85px rgba(6, 182, 212, .28),
+    0 0 130px rgba(59, 130, 246, .16);
+}
+
+
+/* glass */
+
+
+.theme-glass {
+  background: rgba(0, 0, 0, .28);
+  
+  backdrop-filter: blur(45px);
+  -webkit-backdrop-filter: blur(45px);
+  
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+
+.theme-glass .va-overlay {
+  background: 
+    radial-gradient(
+      circle at top,
+      rgba(255, 255, 255, .05),
+      transparent 45%
+    );
+}
+
+
+
+.theme-glass .va-orb,
+.theme-glass .va-orb-glow {
+  background: 
+    linear-gradient(
+      135deg,
+      #bae6fd,
+      #c4b5fd,
+      #f5d0fe
+    );
+}
+
+.theme-glass .va-title {
+  color: white;
+}
+
+.theme-glass .va-sub {
+  color: rgba(255, 255, 255, .75);
+}
+
+.theme-glass .va-status {
+  color: #a5f3fc;
+}
+
+.theme-glass .va-user-text{
+    color: white;
+}
+
+.theme-glass .va-ai-text {
+  color: rgba(255, 255, 255, .72);
+}
+
+/* ==========================================================================
+   GLASS THEME BUTTONS
+   ========================================================================== */
+
+.theme-glass .va-mic,
+.theme-glass .va-btn {
+  background: 
+    linear-gradient(
+      135deg,
+      #38bdf8,
+      #8b5cf6
+    );
+
+  /* Frosted neon glow */
+  box-shadow:
+    0 0 35px rgba(34, 211, 238, .34),
+    0 0 95px rgba(139, 92, 246, .28),
+    0 0 150px rgba(56, 189, 248, .18);
+}
+
+
+/* neon */
+
+
+.theme-neon {
+  background: #03120d;
+  border: 1px solid rgba(16, 185, 129, .18);
+}
+
+.theme-neon .va-overlay {
+  background: 
+    radial-gradient(
+      circle at top,
+      rgba(16, 185, 129, .18),
+      transparent 45%
+    );
+}
+
+.theme-neon .va-orb,
+.theme-neon .va-orb-glow {
+  background: 
+    linear-gradient(
+      135deg,
+      #34d399,
+      #10b981,
+      #14b8a6
+    );
+}
+
+
+
+ .theme-neon .va-title {
+  color: #ecfdf5;
+}
+
+.theme-neon .va-sub {
+  color: rgba(209, 250, 229, .72);
+}
+
+.theme-neon .va-status {
+  color: #6ee7b7;
+}
+
+.theme-neon .va-wave span {
+  background: #6ee7b7;
+}
+
+.theme-neon .va-user-text {
+  color: #ecfdf5;
+}
+
+.theme-neon .va-ai-text {
+  color: rgba(209, 250, 229, .75);
+}
+
+/* ==========================================================================
+   NEON THEME BUTTONS
+   ========================================================================== */
+
+.theme-neon .va-mic,
+.theme-neon .va-btn {
+  background: 
+    linear-gradient(
+      135deg,
+      #10b981,
+      #22c55e
+    );
+
+  /* Strong neon glow */
+  box-shadow:
+    0 0 38px rgba(16, 185, 129, .45),
+    0 0 100px rgba(34, 197, 94, .32),
+    0 0 160px rgba(16, 185, 129, .20);
+}
+
+
+@media (max-width: 640px) {
+  .va-popup {
+    width: 340px;
+    min-width: 340px;
+    max-width: 340px;
+
+    height: 560px;
+    min-height: 560px;
+    max-height: 560px;
+
+    right: 50%;
+    transform: translateX(50%);
+    bottom: 82px;
+
+    border-radius: 30px;
+  }
+
+
+    .va-btn {
+    width: 64px;
+    height: 64px;
+    right: 14px;
+    bottom: 14px;
+    }
+
+    .va-btn img {
+    width: 30px;
+    height: 30px;
+    }
+
+    .va-title {
+  font-size: 26px;
+}
+
+.va-sub {
+  font-size: 13px;
+}
+
+
+}
+
