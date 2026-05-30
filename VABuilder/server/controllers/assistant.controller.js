@@ -159,7 +159,7 @@ ${message}
 
 `
 
-    const aiResponse = await generateGeminiResponse(prompt, user.geminiApiKey, user )
+    const aiResponse = await generateGeminiResponse({prompt, apikey:user.geminiApiKey, user} )
         
         if (user.plan === "free") {
             user.totalMessages += 1
@@ -169,16 +169,16 @@ ${message}
         }
         return res.json({
             success: true,
-            aiResonse
+            aiResponse
         });
 
     } catch (error) {
-        console.log(error)
+        console.log(error.message)
 
         return res.status(500).json({
             success: false,
             message:
-                "Assistant AI Error",
+                "Assistant AI Error : "+error.message,
         })
     }
 }
