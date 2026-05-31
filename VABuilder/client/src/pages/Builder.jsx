@@ -183,7 +183,7 @@ const Builder = ({ user, setUser }) => {
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-7">
               <div className="mt-4 rounded-2xl bg-amber-50 border border-amber-200 p-4">
                 <p className="text-sm font-semibold text-amber-900">
                   Where to paste this script?
@@ -456,8 +456,13 @@ const Builder = ({ user, setUser }) => {
             {/* SAVE BUTTON */}
             <button
               onClick={saveAssistant}
-              disabled={loading}
-              className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+              disabled={loading ||
+              !assistantName||
+              !buisnessName||
+              !buisnessType||
+              !buisnessDescription||
+              !geminiApiKey}
+              className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:opacity-50">
               {loading
                 ? "Saving..."
                 : user?.isSetupComplete

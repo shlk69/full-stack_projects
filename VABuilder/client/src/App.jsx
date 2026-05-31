@@ -8,6 +8,7 @@ import { Navigate } from "react-router-dom";
 import axios from "axios";
 import ProtectedRoute from "./components/protectedRoute";
 import { Toaster } from 'react-hot-toast'
+import { Billing } from "./pages/Billing";
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -61,7 +62,7 @@ const App = () => {
                 />
                 <Route
                   path="/billing"
-                  element={<Home user={user} setUser={setUser} />}
+                  element={<Billing user={user} setUser={setUser} />}
                 />
                 <Route path="/*" element={<Navigate to="/" replace />} />
               </Routes>
