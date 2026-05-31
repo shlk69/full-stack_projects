@@ -4,19 +4,11 @@ export const generateGeminiResponse = async ({
     user
 }) => {
     try {
-        // FIXED: Fall back to your server's .env file if a per-user key wasn't passed down
-        const finalApiKey = apikey || process.env.GEMINI_API_KEY;
 
-        if (!finalApiKey) {
-            throw new Error('Api key is missing');
-        }
-
-        const response = await fetch(`${process.env.GEMINI_URL}`, {
+        const response = await fetch(`${process.env.GEMINI_URL}?key=${process.env.GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // FIXED: Changed 'api.trim()' to use 'finalApiKey.trim()'
-                'x-goog-api-key': finalApiKey.trim()
             },
             body: JSON.stringify({
                 contents: [
@@ -59,7 +51,6 @@ export const generateGeminiResponse = async ({
 
         const data = await response.json();
 
-        // Using optional chaining safely to extract the generated text response
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!text) {
@@ -70,6 +61,6 @@ export const generateGeminiResponse = async ({
     }
     catch (error) {
         console.log("Gemini Fetch Error:", error.message);
-        throw new Error(`Gemini API fetch failed: ${error.message}`);
+        throw new Error(`Gemini API fetch failed`);
     }
 };

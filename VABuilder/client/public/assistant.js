@@ -1,15 +1,15 @@
 (function () {
+    let isListening = false;
+    let inactivityTimer = null;
+    let manualStop = false;
+    const INACTIVITY_TIMEOUT = 20000;
     const CLIENT_URL = "http://localhost:5173";
     const SERVER_URL = "http://localhost:8000";
     const theme = 'neon';
 
-    // user id
     const script = document.currentScript;
     const userId = script?.dataset?.userId;
     let assistantConfig = null;
-
-    // Global tracking flag for speech recognition state
-    let isListening = false;
 
     // load css
     const link = document.createElement('link');
@@ -20,7 +20,6 @@
     // pop-up creation
     const popup = document.createElement('div');
     popup.className = `va-popup theme-${theme}`;
-
     popup.innerHTML = `
     <div class="va-overlay"></div>
     <div class="va-content">
@@ -39,9 +38,7 @@
                 <span></span><span></span><span></span>
                 <span></span><span></span><span></span>
             </div>
-            <!-- User Text -->
             <div class="va-user-text"></div>
-            <!-- AI Text -->
             <div class="va-ai-text"></div>
         </div>
         <div class="va-bottom">
@@ -51,7 +48,6 @@
         </div>
     </div>
     `;
-
     document.body.appendChild(popup);
 
     // floating button
@@ -60,24 +56,23 @@
     button.innerHTML = `<img src="${CLIENT_URL}/newlogo.png" alt="logo" />`;
     document.body.appendChild(button);
 
-    // toggle popup
     let open = false;
     button.onclick = () => {
         open = !open;
         popup.style.display = open ? "flex" : "none";
     };
 
-    // load assistant
+    // load assistant config
     const loadAssistant = async () => {
         try {
-            const res = await fetch(`http://localhost:8000/api/assistant/config/${userId}`);
+            const res = await fetch(`${SERVER_URL}/api/assistant/config/${userId}`);
             const data = await res.json();
             if (data) {
                 assistantConfig = data.user;
                 applyConfig();
             }
         } catch (error) {
-            console.log('frontend error config : ', error.message);
+            console.log('frontend error config:', error.message);
         }
     };
 
@@ -85,12 +80,8 @@
         if (!assistantConfig) return;
         popup.className = `va-popup theme-${assistantConfig.theme}`;
         button.className = `va-btn theme-${assistantConfig.theme}`;
-
-        const title = popup.querySelector('.va-title');
-        title.innerHTML = `Hello! I'm ${assistantConfig.assistantName}`;
-
-        const subTitle = popup.querySelector('.va-sub');
-        subTitle.innerHTML = `
+        popup.querySelector('.va-title').innerHTML = `Hello! I'm ${assistantConfig.assistantName}`;
+        popup.querySelector('.va-sub').innerHTML = `
             Welcome to ${assistantConfig?.businessName || 'our business'}.<br />
             Ask anything about your website.
         `;
@@ -104,10 +95,9 @@
     const aiText = popup.querySelector(".va-ai-text");
     const mic = popup.querySelector(".va-mic");
 
-    // text-speech
-    const speak = (text) => {
+    // ── Speech synthesis ────────────────────────────────────────────────────
+    const speak = (text, onDone) => {
         window.speechSynthesis.cancel();
-
         aiText.innerText = text;
         status.innerText = "AI Speaking...";
 
@@ -118,107 +108,167 @@
         speech.volume = 1;
 
         speech.onend = () => {
-            status.innerText = "Tap mic to Speak";
-            wave.style.opacity = "0";
+            if (onDone) onDone();
         };
 
-        // FIXED: Corrected syntax typos here
         window.speechSynthesis.speak(speech);
     };
 
+    // ── SpeechRecognition setup ──────────────────────────────────────────────
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        recognition.lang = "en-US";
-        recognition.continuous = false;
-        // Turn this ON so you see text updating on the screen while you speak
-        recognition.interimResults = true;
+    if (!SpeechRecognition) {
+        status.innerText = 'Speech recognition not supported';
+        return; // exit IIFE early — nothing left to do
+    }
 
-        mic.onclick = () => {
-            if (isListening) {
-                // If clicked while listening, act as a stop toggle
-                recognition.stop();
-                return;
-            }
+    // Declare recognition HERE so every helper below can access it
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = true;
 
-            wave.style.opacity = "1";
-            status.innerText = "Listening...";
-            userText.innerText = "";
-            aiText.innerText = "";
-
+    // ── Helpers that need recognition in scope ───────────────────────────────
+    const safeStart = () => {
+        try {
             recognition.start();
-            isListening = true;
-        };
+        } catch (err) {
+            // Ignore "already started" errors that browsers sometimes throw
+            console.warn("recognition.start() error (ignored):", err.message);
+        }
+    };
 
-        recognition.onresult = (e) => {
-            // FIXED: Correct way to extract text from SpeechRecognition event arrays
-            const resultIndex = e.resultNo || 0;
-            const text = e.results[e.results.length - 1][0].transcript;
-
-            // Show the text on the UI immediately while speaking
-            userText.innerText = "You: " + text;
-
-            // Only send to backend if the browser is completely finished processing the sentence
-            if (e.results[e.results.length - 1].isFinal) {
-                isListening = false; // Free up the mic flag immediately
+    const resetInactivityTimer = () => {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+            if (isListening) {
+                manualStop = true;
+                isListening = false;
                 recognition.stop();
-
-                setTimeout(async () => {
-                    try {
-                        status.innerText = 'Thinking...';
-                        const res = await fetch(`${SERVER_URL}/api/assistant/ask`, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                                message: text,
-                                userId
-                            })
-                        });
-
-                        const data = await res.json();
-                        console.log(data);
-
-                        if (data.success) {
-                            if (data.action === "navigate") {
-                                speak(data.response);
-                                setTimeout(() => {
-                                    window.location.href = data.path;
-                                }, 1500);
-                            } else {
-                                speak(data.aiResponse);
-                            }
-                        } else {
-                            speak("Response Error please Check your plan");
-                        }
-                    } catch (error) {
-                        console.log('Server error', error.message);
-                        status.innerText = "Tap mic to Speak";
-                        wave.style.opacity = "0";
-                    }
-                }, 600);
-            }
-        };
-
-        recognition.onend = () => {
-            isListening = false;
-            if (status.innerText === "Listening...") {
                 status.innerText = "Tap mic to Speak";
                 wave.style.opacity = "0";
+                userText.innerText = "";
+                aiText.innerText = "";
             }
-        };
+        }, INACTIVITY_TIMEOUT);
+    };
 
-        recognition.onerror = (event) => {
+    // Called when user clicks mic while listening
+    const stopVoiceAssistant = () => {
+        clearTimeout(inactivityTimer);
+        manualStop = true;
+        isListening = false;
+        recognition.stop();
+        status.innerText = "Tap mic to Speak";
+        wave.style.opacity = "0";
+        userText.innerText = "";
+        aiText.innerText = "";
+    };
+
+    // Resume listening after AI finishes speaking
+    const resumeListening = () => {
+        if (manualStop) return;    
+        isListening = true;
+        status.innerText = "Listening...";
+        wave.style.opacity = "1";
+        safeStart();
+        resetInactivityTimer();
+    };
+
+    // ── Mic button ───────────────────────────────────────────────────────────
+    mic.onclick = () => {
+        if (isListening) {
+            stopVoiceAssistant();
+            return;
+        }
+
+        manualStop = false;
+        isListening = true;
+        wave.style.opacity = "1";
+        status.innerText = "Listening...";
+        userText.innerText = "";
+        aiText.innerText = "";
+
+        safeStart();
+        resetInactivityTimer();
+    };
+
+    // ── Recognition events ───────────────────────────────────────────────────
+    recognition.onresult = (e) => {
+        resetInactivityTimer();
+
+        const result = e.results[e.results.length - 1];
+        const text = result[0].transcript;
+
+        userText.innerText = "You: " + text;
+
+        if (result.isFinal) {
+            // Pause listening while we fetch AI response
             isListening = false;
-            console.error("Speech Recognition Error: ", event.error);
-            status.innerText = "Tap button to Speak";
-            wave.style.opacity = "0";
-        };
+            clearTimeout(inactivityTimer);
+            recognition.stop();
 
-    } else {
-        status.innerText = 'Speech recognition not supported';
-    }
+            setTimeout(async () => {
+                try {
+                    status.innerText = "Thinking...";
+                    const res = await fetch(`${SERVER_URL}/api/assistant/ask`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ message: text, userId })
+                    });
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                        if (data.action === "navigate") {
+                            speak(data.response, () => {
+                                window.location.href = data.path;
+                            });
+                        } else {
+                            // After AI speaks, automatically resume listening
+                            speak(data.aiResponse, () => {
+                                status.innerText = "Tap mic to Speak";
+                                wave.style.opacity = "0";
+                                resumeListening();   // ← keep session alive ✓
+                            });
+                        }
+                    } else {
+                        speak("Response Error, please check your plan.", () => {
+                            status.innerText = "Tap mic to Speak";
+                            wave.style.opacity = "0";
+                        });
+                    }
+                } catch (error) {
+                    console.log('Server error:', error.message);
+                    status.innerText = "Tap mic to Speak";
+                    wave.style.opacity = "0";
+                }
+            }, 600);
+        }
+    };
+
+    recognition.onend = () => {
+        // Don't restart if manually stopped or session not active
+        if (manualStop || !isListening) {
+            status.innerText = "Tap mic to Speak";
+            wave.style.opacity = "0";
+            return;
+        }
+
+        // Browser ended on its own mid-session — restart seamlessly
+        status.innerText = "Listening...";
+        wave.style.opacity = "1";
+        resetInactivityTimer();
+        safeStart();
+    };
+
+    recognition.onerror = (event) => {
+        clearTimeout(inactivityTimer);
+        isListening = false;
+        manualStop = false;
+        console.error("Speech Recognition Error:", event.error);
+        status.innerText = "Tap button to Speak";
+        wave.style.opacity = "0";
+    };
 
 })();
