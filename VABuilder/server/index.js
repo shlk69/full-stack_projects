@@ -10,6 +10,7 @@ import { connection } from './config/connectDB.js'
 import authRoutes from './routes/auth.route.js'
 import userRouter from './routes/user.route.js'
 import assistantRouter from './routes/assistant.route.js'
+import billingRouter from './routes/billing.routes.js'
 
 const app = express()
 
@@ -37,8 +38,13 @@ app.get('/', (req, res) => {
     res.json('VABuilder is here buddy!')
 })
 
+
+//private cors(only client host)
 app.use('/api/auth',privateCors, authRoutes)
 app.use('/api/user',privateCors, userRouter)
+app.use('/api/billing', privateCors, billingRouter)
+
+//Public cors(other client hosts inlcuding single client host)
 app.use('/api/assistant',publicCors, assistantRouter)
 
 const PORT = process.env.PORT || 8000
