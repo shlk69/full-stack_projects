@@ -1,6 +1,7 @@
 import { Billing } from "../models/billing.model.js"
 import { razorpay } from "../config/razorpay.js"
 import crypto from 'crypto'
+import {User} from '../models/user.model.js'
 
 export const createOrder = async (req, res) => {
     try {
@@ -9,7 +10,7 @@ export const createOrder = async (req, res) => {
         let amount = 0
 
         if (plan === "pro") {
-            amount = 699
+            amount = 299
         }
 
         const order = await razorpay.orders.create({
@@ -80,6 +81,7 @@ export const verifyBilling = async (req, res) => {
                     90 * 24 * 60 * 60 * 1000
                 ),
         }, { new: true })
+        await user.save()
         
         return res.json({
             success: true,
