@@ -20,7 +20,7 @@ export const signup = async (req, res) => {
 
         const existingUser = await User.findOne({ email })
         if (existingUser) {
-            return res.status(409).json({message:'Email already exists'})
+            return res.status(409).json({ message: 'Email already exists' })
         }
 
         const index = Math.floor(Math.random() * 67) + 1
@@ -29,42 +29,73 @@ export const signup = async (req, res) => {
             fullname,
             email,
             password,
-            profilePic:randomAvatar
+            profilePic: randomAvatar
         })
 
         const token = jwt.sign(
-            {userId: user._id },
+            { userId: user._id },
             process.env.JWT_SECRET_KEY,
-            {expiresIn:'7d'}
+            { expiresIn: '7d' }
         )
-        res.cookies('jwt', token, {
+        res.cookie('jwt', token, {
             maxAge: 7 * 24 * 60 * 60 * 1000,
             httpOnly: true,
             sameSite: 'strict',
-            secure:process.env.NODE_ENV === 'production'
+            secure: process.env.NODE_ENV === 'production'
         })
 
         res.status(201).json({
             success: true,
             user,
-            message:'User is successfully registered'
+            message: 'User is successfully registered'
         })
     } catch (error) {
         console.log(
             'signup error: ', error.message)
         return res.status(500).json({
             message: 'Error while registering the user',
-            success:false
+            success: false
         })
     }
 }
 
 export const login = async (req, res) => {
-
+    try {
+        const { email, password } = req.body
+        if (!email || !password) {
+            return res.status(400).json({ message: 'All fields required' })
+        }
+        const user = await User.findOne({ email })
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid email or password' })
+        }
+        const isPassValid = await user.isPasswordCorrect(password)
+        if (!isPassValid) {
+            return res.status(401).json({ message: 'Invalid email or password' })
+        }
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: '7d' }
+        )
+        res.cookie('jwt', token, {
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production'
+        })
+        return res.status(200).json({
+            success: true,
+            user
+        })
+    } catch (error) {
+        console.log('Login error :', error.message)
+        return res.status(500).json("Unable to login ")
+    }
 
 }
 
 export const logout = async (req, res) => {
-
-
+    res.clearCookie('jwt')
+    res.status(200).json({message:'User logged out successfully'})
 }
