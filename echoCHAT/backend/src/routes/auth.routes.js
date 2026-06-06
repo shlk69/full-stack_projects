@@ -14,6 +14,9 @@ router.post('/logout', logout)
 // Protected routes
 
 router.post('/onboard',verifyJwt, onboard)
+router.get('/me', verifyJwt, (req, res) => {
+    res.status(200).json({'Logged in':req.user.fullname,success:true})
+})
 
 
 export default router

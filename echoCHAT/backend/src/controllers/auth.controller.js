@@ -114,7 +114,6 @@ export const logout = async (req, res) => {
 }
 
 
-
 export const onboard = async (req,res) => {
     try {
         const { fullname, bio, nativeLanguage, learningLanguage, location } = req.body
