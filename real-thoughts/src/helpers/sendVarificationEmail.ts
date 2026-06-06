@@ -1,7 +1,10 @@
-import { resend } from "@/lib/resend"
 import VerificationEmail from "../../emails/VerificationEmail"
 import { ApiResponse } from "@/types/ApiResponse"
+import { Resend } from "resend";
 
+
+
+export const resend = new Resend(process.env.RESEND_API_KEY);
 export async function sendVerificationEmail(
     email: string,
     username: string,

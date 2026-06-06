@@ -97,6 +97,7 @@ export const login = async (req, res) => {
             secure: process.env.NODE_ENV === 'production'
         })
         return res.status(200).json({
+            message:'Logged in successfully',
             success: true,
             user
         })
@@ -109,11 +110,50 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
     res.clearCookie('jwt')
-    res.status(200).json({message:'User logged out successfully'})
+    res.status(200).json({ message: 'User logged out successfully' })
 }
 
 
 
-export const onboard = async () => {
-    
+export const onboard = async (req,res) => {
+    try {
+        const { fullname, bio, nativeLanguage, learningLanguage, location } = req.body
+        if (!fullname || !bio || !nativeLanguage || !learningLanguage || !location) {
+            return res.status(400).json({
+                message: "All fields are required",
+                missingFields: [
+                    !fullname && "fullName",
+                    !bio && "bio",
+                    !nativeLanguage && "nativeLanguage",
+                    !learningLanguage && "learningLanguage",
+                    !location && "location",
+                ].filter(Boolean),
+            });
+        }
+        const updatedUser = await User.findByIdAndUpdate(req.user._id,{
+            ...req.body,
+            isOnBoarded: true
+        }, { new: true })
+
+
+        if (!updatedUser) {
+            return res.status(404).json({message:'User not found'})
+        }
+        try {
+            await upsertStreamUser({
+                id: updatedUser._id.toString(),
+                name: updatedUser.fullname,
+                image: updatedUser.profilePic || '',
+            })
+            console.log('Updated stream user :',updatedUser.fullname)
+        } catch (error) {
+            console.log('Unable to update stream user :',error.message)
+        }
+
+
+        return res.status(200).json({message:'User updated successfully'})
+    } catch (error) {
+        console.log('Error while updating :',error.message)
+        return res.status(500).json({message:'Internal server error'})
+    }
 }
