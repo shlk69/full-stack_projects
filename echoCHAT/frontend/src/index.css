@@ -3,3 +3,6 @@
 @plugin "daisyui" {
   themes: all;
 }
+
+@source "./src/**/*.{js,jsx,ts,tsx}";
+@source "./index.html";
