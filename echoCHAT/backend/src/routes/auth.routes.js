@@ -15,7 +15,7 @@ router.post('/logout', logout)
 
 router.post('/onboard',verifyJwt, onboard)
 router.get('/me', verifyJwt, (req, res) => {
-    res.status(200).json({'Logged in':req.user.fullname,success:true})
+    res.status(200).json({user:req.user,success:true})
 })
 
 
