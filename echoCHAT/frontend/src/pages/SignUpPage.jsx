@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { signup } from "../lib/api";
 import axios from "axios";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -13,17 +14,14 @@ const SignUpPage = () => {
   });
  
   const queryClient = useQueryClient()
-  const { isPending, mutate, error } = useMutation({
-    mutationFn: async () => {
-      const response = await axiosInstance.post('/auth/signup', signupData)
-      return response.data
-    },
+  const { isPending, mutate:signupMutation, error } = useMutation({
+    mutationFn: signup,
     onSuccess:() => queryClient.invalidateQueries({queryKey:['authUser']})
  })
    
   const handleSignup = (e) => {
     e.preventDefault();
-    mutate()
+    signupMutation(signupData);
   };
 
   return (
@@ -46,6 +44,14 @@ const SignUpPage = () => {
               echoCHAT
             </span>
           </div>
+          {/* Error message if any */}
+          {error && (
+            <div>
+              <span className="alert alert-error mb-4">
+                {error.response?.data?.message || error.message}
+              </span>
+            </div>
+          )}
 
           <div className="w-full">
             <form onSubmit={handleSignup}>
@@ -125,7 +131,11 @@ const SignUpPage = () => {
                 </div>
 
                 <button type="submit" className="btn btn-primary w-full">
-                  {isPending?'Signing-up...':'Create Account'}
+                  {isPending ? (
+                    <>
+                      <span className="loading loading-spinner loading-xs"></span>
+                      Creating account...
+                    </>) : ('Create Account')}
                 </button>
 
                 <div className="text-center mt-4">
@@ -141,8 +151,7 @@ const SignUpPage = () => {
           </div>
         </div>
 
-
-         {/* SIGNUP FORM - RIGHT SIDE */}
+        {/* SIGNUP FORM - RIGHT SIDE */}
         <div className="hidden lg:flex w-full lg:w-1/2 bg-primary/10 items-center justify-center">
           <div className="max-w-md p-8">
             {/* Illustration */}
@@ -165,8 +174,6 @@ const SignUpPage = () => {
             </div>
           </div>
         </div>
-
-
       </div>
     </div>
   );

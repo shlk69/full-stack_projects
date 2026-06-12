@@ -13,7 +13,7 @@ router.post('/logout', logout)
 
 // Protected routes
 
-router.post('/onboard',verifyJwt, onboard)
+router.post('/onboarding',verifyJwt, onboard)
 router.get('/me', verifyJwt, (req, res) => {
     res.status(200).json({user:req.user,success:true})
 })
