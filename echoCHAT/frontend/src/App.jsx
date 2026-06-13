@@ -38,11 +38,14 @@ const App = () => {
         />
         <Route
           path="/signup"
-          element={!authenticatedUser ? <SignUpPage /> : <Navigate to="/" />}
+          element={!authenticatedUser ? <SignUpPage /> : <Navigate to={
+            isOnboarded ? ('/') : ('/onboarding')} />}
         />
         <Route
           path="/login"
-          element={!authenticatedUser ? <LoginPage /> : <Navigate to="/" />}
+          element={!authenticatedUser ? <LoginPage /> : <Navigate to={
+            isOnboarded?('/'):('/onboarding')
+          } />}
         />
         <Route
           path="/notifications"

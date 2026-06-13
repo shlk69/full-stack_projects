@@ -1,9 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { signup } from "../lib/api";
 import axios from "axios";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { axiosInstance } from "../lib/axios";
+import useSignup from "../hooks/useSignup";
 
 const SignUpPage = () => {
   const navigate = useNavigate()
@@ -13,12 +12,9 @@ const SignUpPage = () => {
     password: "",
   });
  
-  const queryClient = useQueryClient()
-  const { isPending, mutate:signupMutation, error } = useMutation({
-    mutationFn: signup,
-    onSuccess:() => queryClient.invalidateQueries({queryKey:['authUser']})
- })
-   
+  
+  const { isPending, error, signupMutation } = useSignup()
+  
   const handleSignup = (e) => {
     e.preventDefault();
     signupMutation(signupData);
