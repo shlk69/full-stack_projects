@@ -9,8 +9,8 @@ const Sidebar = () => {
     const location = useLocation()
     const currentPath = location.pathname
   return (
-    <aside className="w-64 bg-base-200 border-r border-base-300   lg:flex flex-col h-screen sticky top-0">
-      <div className="p-5 border-b border-base-300">
+    <aside className="w-64 bg-base-200 border-r border-base-300 hidden  lg:flex flex-col h-screen sticky top-0">
+      <div className="p-5">
         <Link to="/" className="flex items-center gap-2.5">
           <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center">
             <img
@@ -53,6 +53,24 @@ const Sidebar = () => {
           <span>Notifications</span>
         </Link>
       </nav>
+
+      {/* USER PROFILE SECTION */}
+      <div className="p-4 border-t border-base-300 mt-auto">
+        <div className="flex items-center gap-3">
+          <div className="avatar">
+            <div className="w-10 rounded-full">
+              <img src={authUser?.profilePic} alt="User Avatar" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-sm">{authUser?.fullname}</p>
+            <p className="text-xs text-dash-success text-success flex items-center gap-1">
+              <span className="size-2 rounded-full bg-success inline-block" />
+              Online
+            </p>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 
