@@ -1,9 +1,9 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import useAuthUser from "../hooks/useAuthUser";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { completeOnboarding } from "../lib/api";
-import { Globe, MapPinCheck, ShuffleIcon,LoaderIcon } from "lucide-react";
+import { Globe, MapPinCheck, ShuffleIcon, LoaderIcon } from "lucide-react";
 import { LANGUAGES } from "../constant/index";
 
 const OnboardingPage = () => {
@@ -19,16 +19,20 @@ const OnboardingPage = () => {
     profilePic: authUser?.profilePic || "",
   });
 
-
   const { mutate: onboardingMutation, isPending } = useMutation({
     mutationFn: completeOnboarding,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Onboarding completed");
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["authUser"],
+      });
+
+      const updatedUser = queryClient.getQueryData(["authUser"]);
     },
     onError: (error) => {
-      toast.error(error.response.data.message)
-    }
+      toast.error(error.response.data.message);
+    },
   });
 
   const handleSubmit = (e) => {
@@ -40,8 +44,8 @@ const OnboardingPage = () => {
     const index = Math.floor(Math.random() * 67) + 1;
     const randomAvatar = `https://i.pravatar.cc/300?img=${index}`;
 
-    setFormState({ ...formState, profilePic: randomAvatar })
-    toast.success('Avatar generated')
+    setFormState({ ...formState, profilePic: randomAvatar });
+    toast.success("Avatar generated");
   };
 
   return (
@@ -202,7 +206,6 @@ const OnboardingPage = () => {
                 </>
               )}
             </button>
-
           </form>
         </div>
       </div>

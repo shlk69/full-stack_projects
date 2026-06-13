@@ -131,7 +131,7 @@ export const onboard = async (req,res) => {
         }
         const updatedUser = await User.findByIdAndUpdate(req.user._id,{
             ...req.body,
-            isOnBoarded: true
+            isOnboarded: true
         }, { new: true })
 
 
