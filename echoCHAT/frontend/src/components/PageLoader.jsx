@@ -1,13 +1,13 @@
-import React from "react";
+import { LoaderIcon } from "lucide-react";
+import  useThemeStore  from "../store/useThemeStore";
 
 const PageLoader = () => {
+  const { theme } = useThemeStore();
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-base-100">
-      <span className="loading loading-ring loading-xl text-primary"></span>
-
-      <div className="text-center">
-        <h2 className="text-xl font-semibold">Loading...</h2>
-      </div>
+    <div
+      className="min-h-screen flex items-center justify-center"
+      data-theme={theme}>
+      <LoaderIcon className="animate-spin size-10 text-primary" />
     </div>
   );
 };
