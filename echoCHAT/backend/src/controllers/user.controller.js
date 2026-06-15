@@ -115,14 +115,14 @@ export const getFriendRequests = async (req, res) => {
         const incomingRequest = await FriendRequest.find({
             recipient: req.user.id,
             status:'pending'
-        }).populate('friends', 'fullname profilePic nativeLanguage learningLanguage')
+        }).populate('sender', 'fullname profilePic nativeLanguage learningLanguage')
         
         const acceptedRequest = await FriendRequest.find({
             sender: req.user.id,
             status:'accepted'
-        }).populate('friends', 'fullname profilePic')
+        }).populate('recipient', 'fullname profilePic')
         
-        res.status(200).json(incomingRequest,acceptedRequest)
+        res.status(200).json({incomingRequest,acceptedRequest})
     } catch (error) {
         console.log('Error while getting frnd req :', error.message)
         res.status(500).json({message:'Internal server error'})
