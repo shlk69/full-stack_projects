@@ -40,10 +40,13 @@ const HomePage = () => {
   });
 
   const { mutate: sendRequestMutation, isPending } = useMutation({
-    mutationFn: sendFriendRequest,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] }),
+
+    mutationFn: (userId) => sendFriendRequest(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] });
+    },
   });
+
 
   useEffect(() => {
     const outgoingIds = new Set();
@@ -113,7 +116,7 @@ const HomePage = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recommendedUsers.map((user) => {
-                const hasRequestBeenSent = outgoingRequestsIds.has(user._id);
+                const hasRequestBeenSent = outgoingRequestsIds?.has(user._id);
 
                 return (
                   <div
@@ -158,7 +161,7 @@ const HomePage = () => {
                       <button
                         className={`btn w-full mt-2 ${
                           hasRequestBeenSent ? "btn-disabled" : "btn-primary"
-                        } `}
+                        }`}
                         onClick={() => sendRequestMutation(user._id)}
                         disabled={hasRequestBeenSent || isPending}>
                         {hasRequestBeenSent ? (

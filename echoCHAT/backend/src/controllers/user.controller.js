@@ -131,14 +131,24 @@ export const getFriendRequests = async (req, res) => {
 
 export const getOutgoingFriendRequests = async (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Unauthorized - User session not found" });
+        }
+
+        // 1. Use req.user._id fallback to prevent reading undefined values
+        const currentUserId = req.user._id || req.user.id;
+
+        // 2. Fetch the pending transaction requests
         const outgoingReq = await FriendRequest.find({
-            sender: req.user.id,
+            sender: currentUserId,
             status: 'pending',
-        }).populate('friends', 'fullname profilePic nativeLanguage learningLanguage')
-        
-        return res.status(200).json(outgoingReq)
+        })
+            // 3. FIX: Populate the 'recipient' (or 'receiver') field, NOT 'friends'
+            .populate('recipient', 'fullName profilePic nativeLanguage learningLanguage');
+
+        return res.status(200).json(outgoingReq);
     } catch (error) {
-        console.log('Error while outgoing req :',error.message)
-        return res.status(500).json({message:'Internal server error'})
+        console.error('Error while getting outgoing req:', error.message);
+        return res.status(500).json({ message: 'Internal server error' });
     }
-}
+};
