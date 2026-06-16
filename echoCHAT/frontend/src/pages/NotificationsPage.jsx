@@ -108,15 +108,15 @@ const NotificationsPage = () => {
                           <div className="avatar mt-1 size-10 rounded-full">
                             <img
                               src={notification.recipient.profilePic}
-                              alt={notification.recipient.fullName}
+                              alt={notification.recipient.fullname}
                             />
                           </div>
                           <div className="flex-1">
                             <h3 className="font-semibold">
-                              {notification.recipient.fullName}
+                              {notification.recipient.fullname}
                             </h3>
                             <p className="text-sm my-1">
-                              {notification.recipient.fullName} accepted your
+                              {notification.recipient.fullname} accepted your
                               friend request
                             </p>
                             <p className="text-xs flex items-center opacity-70">

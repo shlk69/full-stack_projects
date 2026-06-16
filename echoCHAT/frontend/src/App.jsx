@@ -69,7 +69,7 @@ const App = () => {
                 <NotificationsPage />
               </Layout>
             ) : (
-              <Navigate to={!authenticatedUser?'/login':'/onboarding'} />
+              <Navigate to={!authenticatedUser ? "/login" : "/onboarding"} />
             )
           }
         />
@@ -78,9 +78,18 @@ const App = () => {
           element={authenticatedUser ? <CallPage /> : <Navigate to="/login" />}
         />
         <Route
-          path="/chat"
-          element={authenticatedUser ? <ChatPage /> : <Navigate to="/login" />}
+          path="/chat/:id"
+          element={
+            authenticatedUser && isOnboarded ? (
+              <Layout showSidebar={false}>
+                <ChatPage />
+              </Layout>
+            ) : (
+              <Navigate to={!authenticatedUser ? "/login" : "/onboarding"} />
+            )
+          }
         />
+
         <Route
           path="/onboarding"
           element={
