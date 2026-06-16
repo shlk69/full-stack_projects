@@ -42,6 +42,16 @@ const App = () => {
           }
         />
         <Route
+          path="/call/:id"
+          element={
+            authenticatedUser && isOnboarded ? (
+              <CallPage />
+            ) : (
+              <Navigate to={!authenticatedUser ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
           path="/signup"
           element={
             !authenticatedUser ? (

@@ -1,12 +1,22 @@
-import { VideoIcon } from "lucide-react";
+import { VideoIcon, PhoneIcon } from "lucide-react";
 
-function CallButton({ handleVideoCall }) {
+function CallButton({ handleVideoCall, handleAudioCall }) {
   return (
-    <div className="p-3 border-b flex items-center justify-end max-w-7xl mx-auto w-full absolute top-0">
+    <div className="flex items-center justify-end gap-2 px-2">
+      {/* Audio Call Button */}
+      <button
+        onClick={handleAudioCall}
+        className="btn btn-info btn-sm text-white flex items-center justify-center p-2 rounded-md"
+        title="Start Audio Call">
+        <PhoneIcon className="size-5" />
+      </button>
+
+      {/* Video Call Button */}
       <button
         onClick={handleVideoCall}
-        className="btn btn-success btn-sm text-white">
-        <VideoIcon className="size-6" />
+        className="btn btn-success btn-sm text-white flex items-center justify-center p-2 rounded-md"
+        title="Start Video Call">
+        <VideoIcon className="size-5" />
       </button>
     </div>
   );
