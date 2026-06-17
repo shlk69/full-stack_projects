@@ -49,73 +49,24 @@ const CallPage = () => {
     retryDelay: 1000,
   });
 
-  // Debug logging
-  useEffect(() => {
-    console.log("CallPage Debug:", {
-      authUserLoading: isLoading,
-      authUserExists: !!authUser,
-      tokenLoading: isTokenLoading,
-      tokenError,
-      tokenExists: !!tokenData?.token,
-      callId,
-      userId,
-      callType,
-      isConnecting,
-    });
-  }, [
-    isLoading,
-    authUser,
-    isTokenLoading,
-    tokenError,
-    tokenData,
-    callId,
-    userId,
-    callType,
-    isConnecting,
-  ]);
-
   useEffect(() => {
     let videoClient;
     let timeoutId;
     let isMounted = true;
 
     const initCall = async () => {
-      // Only proceed if all prerequisites are met
-      if (!tokenData?.token) {
-        console.log("Waiting for token...", { token: !!tokenData?.token });
-        return;
-      }
-
-      if (!authUser) {
-        console.log("Waiting for authUser...");
-        return;
-      }
-
-      if (!callId) {
-        console.log("No callId provided");
-        setIsConnecting(false);
-        setError("Missing call ID");
-        return;
-      }
-
-      if (!userId) {
-        console.log("No userId provided in query params");
-        setIsConnecting(false);
-        setError("Missing user ID. Please start the call from chat.");
+      if (!tokenData?.token || !authUser || !callId || !userId) {
         return;
       }
 
       try {
-        console.log("Starting call initialization...", { callId, userId });
         setError(null);
 
-        // Set a timeout to prevent infinite buffering (30 seconds)
         timeoutId = setTimeout(() => {
           if (isMounted) {
             setIsConnecting(false);
             setError("Call connection timeout. Please try again.");
             toast.error("Connection timeout");
-            console.error("Call initialization timeout");
           }
         }, 30000);
 
@@ -125,42 +76,21 @@ const CallPage = () => {
           image: authUser.profilePic,
         };
 
-        console.log("Creating StreamVideoClient...");
         videoClient = new StreamVideoClient({
           apiKey: STREAM_API_KEY,
           user,
           token: tokenData.token,
         });
 
-        console.log("Getting call instance...");
         const callInstance = videoClient.call("default", callId);
 
-        console.log("Joining call...");
+        // FIX 1: Pass initial states directly inside join settings rather than editing tracks sequentially
         await callInstance.join({
           create: true,
           audio: true,
           video: callType === "video",
         });
 
-        // Make sure audio is actually enabled for audio-only calls.
-        try {
-          await callInstance.microphone.enable();
-          console.log("Microphone enabled successfully");
-        } catch (micError) {
-          console.error("Could not enable microphone:", micError);
-        }
-
-        // Disable camera for audio calls
-        if (callType === "audio") {
-          console.log("Disabling camera for audio call...");
-          try {
-            await callInstance.camera.disable();
-          } catch (cameraError) {
-            console.error("Could not disable camera:", cameraError);
-          }
-        }
-
-        console.log("Call joined successfully!");
         clearTimeout(timeoutId);
 
         if (isMounted) {
@@ -185,27 +115,18 @@ const CallPage = () => {
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);
-      if (call) {
-        call.leave().catch(console.error);
-      }
-
-      if (videoClient) {
-        videoClient.disconnectUser().catch(console.error);
-      }
     };
   }, [tokenData?.token, authUser?._id, callId, userId, callType]);
 
-  // Handle token fetch error
   useEffect(() => {
     if (tokenError) {
       setIsConnecting(false);
       setError("Failed to get access token");
       toast.error("Authentication failed");
-      console.error("Token fetch error");
     }
   }, [tokenError]);
 
-  if (isLoading || isTokenLoading) {
+  if (isLoading || isTokenLoading || isConnecting) {
     return <PageLoader />;
   }
 
@@ -216,17 +137,13 @@ const CallPage = () => {
           <h2 className="text-2xl font-bold mb-2 text-error">Error</h2>
           <p className="text-base-content/60 mb-4">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => window.location.replace("/")}
             className="btn btn-primary">
-            Try Again
+            Back Home
           </button>
         </div>
       </div>
     );
-  }
-
-  if (isConnecting) {
-    return <PageLoader />;
   }
 
   if (!client || !call) {
@@ -234,7 +151,6 @@ const CallPage = () => {
       <div className="h-screen flex items-center justify-center bg-base-100">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Failed to initialize call</h2>
-          <p className="text-base-content/60 mb-4">Please try again</p>
           <button
             onClick={() => window.location.reload()}
             className="btn btn-primary">
@@ -249,32 +165,79 @@ const CallPage = () => {
     <div className="h-screen">
       <StreamVideo client={client}>
         <StreamCall call={call}>
-          <CallContent callType={callType} userId={userId} />
+          <CallContent callType={callType} authUser={authUser} />
         </StreamCall>
       </StreamVideo>
     </div>
   );
 };
 
-const CallContent = ({ callType, userId }) => {
-  const navigate = useNavigate();
+const CallContent = ({ callType, authUser }) => {
   const call = useCall();
+  const { useCallCallingState, useRemoteParticipants, useLocalParticipant } =
+    useCallStateHooks();
 
-  const { useCallCallingState, useRemoteParticipants } = useCallStateHooks();
   const callingState = useCallCallingState();
-  const remoteParticipants = useRemoteParticipants();
-  const hasSeenRemoteParticipant = useRef(false);
-  const isLeavingRef = useRef(false);
+  const remoteParticipants = useRemoteParticipants() || [];
+  const localParticipant = useLocalParticipant();
 
-  // Get remote participants from the call state
-  const participants = remoteParticipants || [];
+  const hasConnectedRef = useRef(false);
+  const isLeavingRef = useRef(false);
+  const targetUserRef = useRef(null);
+
+  // Track dynamic participant identity to prevent broken redirection targets
+  useEffect(() => {
+    if (remoteParticipants.length > 0) {
+      const peer = remoteParticipants[0];
+      targetUserRef.current = peer.user_id || peer.id;
+      hasConnectedRef.current = true;
+    }
+  }, [remoteParticipants]);
 
   const redirectToChat = useCallback(() => {
-    if (!userId) return;
-    window.location.replace(`${window.location.origin}/chat/${userId}`);
-  }, [userId]);
+    if (isLeavingRef.current) return;
+    isLeavingRef.current = true;
 
-  // Auto-redirect when current user leaves or call ends for everyone
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlUserId = searchParams.get("userId");
+    let chatTargetId = targetUserRef.current || urlUserId;
+
+    if (!chatTargetId || chatTargetId === authUser?._id) {
+      if (call?.id) {
+        const parts = call.id.split("-");
+        const peerId = parts.find((id) => id !== authUser?._id);
+        if (peerId) chatTargetId = peerId;
+      }
+    }
+
+    if (!chatTargetId) {
+      window.location.replace(`${window.location.origin}/`);
+      return;
+    }
+
+    window.location.replace(`${window.location.origin}/chat/${chatTargetId}`);
+  }, [call?.id, authUser?._id]);
+
+  const handleLeave = useCallback(async () => {
+    try {
+      if (call) {
+        await call.camera.disable().catch(() => {});
+        await call.microphone.disable().catch(() => {});
+
+        // Terminate call cleanly across both sides if active peer exists
+        if (remoteParticipants.length > 0) {
+          await call.endCall();
+        } else {
+          await call.leave();
+        }
+      }
+    } catch (error) {
+      console.error("Error leaving call:", error);
+    } finally {
+      redirectToChat();
+    }
+  }, [call, remoteParticipants.length, redirectToChat]);
+
   useEffect(() => {
     if (
       callingState === CallingState.LEFT ||
@@ -286,141 +249,76 @@ const CallContent = ({ callType, userId }) => {
   }, [callingState, redirectToChat]);
 
   useEffect(() => {
-    if (participants.length > 0) {
-      hasSeenRemoteParticipant.current = true;
-    }
-  }, [participants.length]);
-
-  // Auto-redirect when the other participant leaves (2-person call)
-  const handleLeave = useCallback(async () => {
-    if (isLeavingRef.current) return;
-    isLeavingRef.current = true;
-
-    try {
-      if (call) {
-        // Stop all media tracks first so the mic/camera are fully released.
-        try {
-          await call.camera.disable();
-        } catch (error) {
-          console.error("Error disabling camera:", error);
-        }
-
-        try {
-          await call.microphone.disable();
-        } catch (error) {
-          console.error("Error disabling microphone:", error);
-        }
-
-        // Leave the call and allow SDK to fully teardown the session.
-        await call.leave();
-      }
-
-      // Redirect to chat
-      redirectToChat();
-    } catch (error) {
-      console.error("Error ending call:", error);
-      toast.error("Error ending call, redirecting...");
-      // Still navigate even if there's an error
-      redirectToChat();
-    }
-  }, [call, redirectToChat]);
-
-  useEffect(() => {
-    if (!call) return;
-
-    const handleRemoteCallEnd = () => {
-      if (!isLeavingRef.current) {
-        handleLeave();
-      }
-    };
-
-    const unsubscribeEnded = call.on?.("call.ended", handleRemoteCallEnd);
-    const unsubscribeLeft = call.on?.("call.left", handleRemoteCallEnd);
-
-    return () => {
-      unsubscribeEnded?.();
-      unsubscribeLeft?.();
-    };
-  }, [call, handleLeave]);
-
-  useEffect(() => {
     if (
-      hasSeenRemoteParticipant.current &&
-      participants.length === 0 &&
-      call &&
-      (callingState === CallingState.JOINED ||
-        callingState === CallingState.CONNECTING)
+      hasConnectedRef.current &&
+      callingState === CallingState.JOINED &&
+      remoteParticipants.length === 0
     ) {
-      toast("Other participant left the call", {
-        icon: "ℹ️",
-      });
+      toast("Other participant left the call", { icon: "ℹ️" });
       handleLeave();
     }
-  }, [participants.length, call, callingState, handleLeave]);
-
-  useEffect(() => {
-    if (
-      call &&
-      callingState === CallingState.JOINED &&
-      participants.length === 0
-    ) {
-      const timeout = setTimeout(() => {
-        if (call && callingState === CallingState.JOINED) {
-          handleLeave();
-        }
-      }, 2000);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [call, callingState, participants.length, handleLeave]);
+  }, [remoteParticipants.length, callingState, handleLeave]);
 
   return (
     <StreamTheme>
-      <div className="h-screen flex flex-col bg-base-200">
+      <div className="h-screen flex flex-col bg-base-200 text-slate-800">
         <div className="flex-1">
           {callType === "video" ? (
             <SpeakerLayout />
           ) : (
-            // Audio call layout
-            <div className="h-full flex items-center justify-center">
-              <div className="flex gap-20">
-                {participants.length > 0 ? (
-                  participants.map((participant) => (
+            /* FIX 2: Enhanced Audio Grid explicitly rendering Local & Remote user profiles to bind tracks */
+            <div className="h-full flex flex-col items-center justify-center bg-gradient-to-b from-base-300 to-base-100">
+              <div className="flex flex-wrap items-center justify-center gap-16 md:gap-32 p-4">
+                {/* Local User Element */}
+                {localParticipant && (
+                  <div className="flex flex-col items-center">
+                    <div className="relative">
+                      <img
+                        src={authUser?.profilePic || "/default-avatar.png"}
+                        alt="You"
+                        className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-slate-400 shadow-xl"
+                      />
+                      <span className="absolute bottom-2 right-2 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
+                      </span>
+                    </div>
+                    <h2 className="mt-4 text-xl md:text-2xl font-bold text-base-content">
+                      {localParticipant.name || "You"}
+                    </h2>
+                    <p className="text-sm text-base-content/60 font-medium">
+                      Speaking
+                    </p>
+                  </div>
+                )}
+
+                {/* Remote User Element */}
+                {remoteParticipants.length > 0 ? (
+                  remoteParticipants.map((participant) => (
                     <div
-                      key={
-                        participant.session_id ||
-                        participant.user_id ||
-                        participant.id
-                      }
+                      key={participant.session_id || participant.id}
                       className="flex flex-col items-center">
                       <img
-                        src={
-                          participant.image ||
-                          participant.user?.image ||
-                          "/default-avatar.png"
-                        }
-                        alt={
-                          participant.name ||
-                          participant.user?.name ||
-                          "Participant"
-                        }
-                        className="w-40 h-40 rounded-full object-cover border-4 border-primary"
+                        src={participant.image || "/default-avatar.png"}
+                        alt={participant.name || "Participant"}
+                        className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-primary shadow-xl"
                       />
-                      <h2 className="mt-4 text-2xl font-bold">
-                        {participant.name ||
-                          participant.user?.name ||
-                          "Participant"}
+                      <h2 className="mt-4 text-xl md:text-2xl font-bold text-base-content">
+                        {participant.name || "Participant"}
                       </h2>
-                      <p className="text-base-content/60">In call...</p>
+                      <p className="text-sm text-primary/80 font-medium">
+                        In call
+                      </p>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center">
-                    <p className="text-lg text-base-content/60">
-                      {callingState === CallingState.JOINED
-                        ? "Connecting to participant..."
-                        : "Waiting for participant..."}
-                    </p>
+                  <div className="flex flex-col items-center opacity-70">
+                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-dashed border-base-content/30 flex items-center justify-center animate-pulse">
+                      <span className="text-3xl text-base-content/40">📞</span>
+                    </div>
+                    <h2 className="mt-4 text-xl font-semibold text-base-content/60">
+                      Connecting...
+                    </h2>
                   </div>
                 )}
               </div>
@@ -428,7 +326,7 @@ const CallContent = ({ callType, userId }) => {
           )}
         </div>
 
-        <div className="pb-8 flex justify-center">
+        <div className="pb-12 flex justify-center">
           <CallControls onLeave={handleLeave} />
         </div>
       </div>
