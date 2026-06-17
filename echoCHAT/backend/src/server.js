@@ -11,7 +11,7 @@ import chatRoutes from './routes/chat.routes.js'
 import { connectDB } from './config/db.js'
 
 dotenv.config()
-const PORT = process.env.PORT || 300
+const PORT = process.env.PORT || 3000
 const app = express()
 
 

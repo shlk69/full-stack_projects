@@ -74,7 +74,7 @@ const ChatPage = () => {
 
   const handleVideoCall = async () => {
     if (channel) {
-      const callUrl = `${window.location.origin}/call/${channel.id}`;
+      const callUrl = `${window.location.origin}/call/${channel.id}?userId=${targetUserId}`;
 
       try {
         await channel.sendMessage({
@@ -89,7 +89,7 @@ const ChatPage = () => {
         });
 
         toast.success("Video call room created!");
-        navigate(`/call/${channel.id}`);
+        navigate(`/call/${channel.id}?userId=${targetUserId}`);
       } catch (error) {
         console.error("Failed to send call invitation:", error);
         toast.error("Could not start call. Try again.");
@@ -100,7 +100,7 @@ const ChatPage = () => {
   // Added Audio Call Handler
   const handleAudioCall = async () => {
     if (channel) {
-      const callUrl = `${window.location.origin}/call/${channel.id}?type=audio`;
+      const callUrl = `${window.location.origin}/call/${channel.id}?type=audio&userId=${targetUserId}`;
 
       try {
         await channel.sendMessage({
@@ -115,7 +115,7 @@ const ChatPage = () => {
         });
 
         toast.success("Voice call room created!");
-        navigate(`/call/${channel.id}?type=audio`);
+        navigate(`/call/${channel.id}?type=audio&userId=${targetUserId}`);
       } catch (error) {
         console.error("Failed to send audio invitation:", error);
         toast.error("Could not start audio call. Try again.");
