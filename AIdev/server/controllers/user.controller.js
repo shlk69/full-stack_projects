@@ -24,7 +24,7 @@ export const loginUserController = async (req, res) => {
     }
     try {
         const { email, password } = req.body
-        const user = await User.findOne({ email }).select('+password')
+        const user = await User.findOne({ email })
         if (!user) {
             return res.status(401).json({errors:'Invalid credentials'})
         }
@@ -39,4 +39,12 @@ export const loginUserController = async (req, res) => {
     } catch (error) {
         return res.status(500).json({message:'Internal server error'})
     }
+}
+
+export const profileController = async(req, res) => {
+    console.log(req.user)
+    res.send(req.user.email)
+    return res.status(200).json({
+        user:req.user
+    })
 }
