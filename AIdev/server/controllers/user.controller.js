@@ -1,83 +1,129 @@
 import { User } from "../models/user.model.js";
-import { registerUser } from "../services/user.service.js";
-import { validationResult } from 'express-validator';
+import { validationResult } from "express-validator";
 import { redisClient } from "../services/redis.service.js";
 
 const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 1000 * 60 * 60 * 24 
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 1000 * 60 * 60 * 24,
 };
 
 export const createUserController = async (req, res) => {
     const errors = validationResult(req);
+
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({
+            message: errors.array()[0].msg,
+        });
     }
 
     try {
-        const user = await registerUser(req.body);
+        const { email, password } = req.body;
+
+        const alreadyExists = await User.findOne({ email });
+
+        if (alreadyExists) {
+            return res.status(409).json({
+                message: "User already exists",
+            });
+        }
+
+        const user = await User.create({ email, password });
+
         const token = await user.generateJwt();
 
-        res.cookie('token', token, cookieOptions);
-        return res.status(201).json({ user, token, message: 'User registered successfully' });
+        res.cookie("token", token, cookieOptions);
+
+        return res.status(201).json({
+            user,
+            token,
+            message: "User registered successfully",
+        });
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({
+            message: error.message || "Internal server error",
+        });
     }
 };
 
 export const loginUserController = async (req, res) => {
     const errors = validationResult(req);
+
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({
+            message: errors.array()[0].msg,
+        });
     }
+
     try {
         const { email, password } = req.body;
+
         const user = await User.findOne({ email });
+
         if (!user) {
-            return res.status(401).json({ errors: 'Invalid credentials' });
+            return res.status(401).json({
+                message: "Invalid credentials",
+            });
         }
+
         const isMatching = await user.isValidPassword(password);
+
         if (!isMatching) {
-            return res.status(401).json({ errors: 'Invalid credentials' });
+            return res.status(401).json({
+                message: "Invalid credentials",
+            });
         }
 
         const token = await user.generateJwt();
-        res.cookie('token', token, cookieOptions);
 
-        return res.status(200).json({ user, token, message: 'User logged in successfully' });
+        res.cookie("token", token, cookieOptions);
 
+        return res.status(200).json({
+            user,
+            token,
+            message: "User logged in successfully",
+        });
     } catch (error) {
-        return res.status(500).json({ message: 'Internal server error' });
+        return res.status(500).json({
+            message: error.message || "Internal server error",
+        });
     }
 };
 
 export const profileController = async (req, res) => {
     return res.status(200).json({
-        user: req.user
+        user: req.user,
     });
 };
 
 export const logoutUserController = async (req, res) => {
     try {
-        const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+        const token =
+            req.cookies?.token ||
+            req.headers.authorization?.split(" ")[1];
 
         if (!token) {
-            return res.status(400).json({ error: 'No active session found' });
+            return res.status(400).json({
+                message: "No active session found",
+            });
         }
 
-        // Add to Redis Blocklist
-        await redisClient.set(token, 'logout', 'EX', 60 * 60 * 24);
+        // Add token to Redis blocklist for 24 hours
+        await redisClient.set(token, "logout", "EX", 60 * 60 * 24);
 
-        res.clearCookie('token', {
+        res.clearCookie("token", {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict'
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
         });
 
-        return res.status(200).json({ message: 'User logged out successfully' });
+        return res.status(200).json({
+            message: "User logged out successfully",
+        });
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({
+            message: error.message || "Internal server error",
+        });
     }
 };

@@ -1,16 +1,40 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "../config/axios";
+import { toast } from "react-hot-toast";
+import Loader from "../component/Loader";
 
 const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(""); 
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setError("");
+    setLoading(true);
 
-    console.log("Registering with:", { email, password });
+    try {
+      await axios.post("/users/register", {
+        email,
+        password,
+      });
+
+      toast.success("Account created successfully");
+      navigate("/dashboard");
+    } catch (error) {
+      setError(
+        error.response?.data?.message ||
+          "Something went wrong. Please try again.",
+      );
+
+      toast.error(error.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,6 +49,13 @@ const Register = () => {
             Get started by creating your account below
           </p>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            {error}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
@@ -69,8 +100,16 @@ const Register = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full rounded-lg bg-indigo-600 py-2.5 font-medium text-white transition-colors duration-200 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40">
-            Sign up
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-3 rounded-lg bg-indigo-600 py-2.5 font-medium text-white transition-colors duration-200 hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60">
+            {loading ? (
+              <>
+                <Loader />
+                Creating Account...
+              </>
+            ) : (
+              "Sign up"
+            )}
           </button>
         </form>
 
