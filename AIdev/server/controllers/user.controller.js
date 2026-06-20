@@ -76,6 +76,7 @@ export const loginUserController = async (req, res) => {
         }
 
         const token = await user.generateJwt();
+        delete user._doc.password
 
         res.cookie("token", token, cookieOptions);
 

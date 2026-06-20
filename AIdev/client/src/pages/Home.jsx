@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../config/axios";
+import { MdArrowForward } from "react-icons/md";
+import { IoIosLogOut } from "react-icons/io";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -74,6 +76,27 @@ const Home = () => {
     y: mousePosition.y * 0.02,
   };
 
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await axios.post("/users/logout");
+      setUser(null);
+      navigate("/");
+    } catch (error) {
+      setUser(null);
+      navigate("/");
+    }
+  };
+
+  // Function to mask email
+  const maskEmail = (email) => {
+    if (!email) return "";
+    const [localPart, domain] = email.split("@");
+    const visibleChars = Math.max(2, Math.ceil(localPart.length / 3));
+    const masked = localPart.substring(0, visibleChars) + "***";
+    return `${masked}@${domain}`;
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden relative">
       {/* Animated background gradient */}
@@ -122,8 +145,14 @@ const Home = () => {
                   </button>
 
                   <div className="rounded-xl border border-slate-800/60 bg-slate-900/40 px-4 py-2 text-sm text-slate-300 backdrop-blur-sm">
-                    {user.email}
+                    {maskEmail(user.email)}
                   </div>
+
+                  <button
+                    onClick={handleLogout}
+                    className="rounded-xl border border-slate-700 bg-slate-900/40 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:text-red-300 hover:border-red-500/40 hover:bg-slate-900/60 hover:scale-105 transform backdrop-blur-sm">
+                    <IoIosLogOut size={20}/>
+                  </button>
                 </>
               ) : (
                 <>
@@ -190,18 +219,7 @@ const Home = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <span className="relative px-8 py-3.5 font-semibold text-white flex items-center justify-center gap-2 group-hover:scale-105 transform transition-transform">
                 Start Building Now
-                <svg
-                  className="w-4 h-4 group-hover:translate-x-1 transition-transform"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
+                <MdArrowForward className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
             <button

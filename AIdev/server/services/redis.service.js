@@ -1,17 +1,23 @@
-import Redis from "ioredis";
+import Redis from 'ioredis';
 
+// Configure connection options
 export const redisClient = new Redis({
-    host: process.env.REDIS_HOST,
-    port: parseInt(process.env.REDIS_PORT || "6379", 10), 
-    password: process.env.REDIS_PASSWORD,
-    keepAlive: 10000 
-});
-
-// Catch network drops so your app never crashes
-redisClient.on('error', (err) => {
-    console.error('[ioredis] Connection error occurred:', err.message);
+    host: process.env.REDIS_HOST || '127.0.0.1',
+    port: process.env.REDIS_PORT || 6379,
+    password: process.env.REDIS_PASSWORD || undefined, // Remove if no password set
+    maxRetriesPerRequest: 3,
 });
 
 redisClient.on('connect', () => {
-    console.log('Redis connected');
+    console.log('🔄 Connecting to Redis...');
 });
+
+redisClient.on('ready', () => {
+    console.log('✅ Redis client connected and ready to use');
+});
+
+redisClient.on('error', (err) => {
+    console.error('❌ Redis Connection Error:', err);
+});
+
+export default redisClient;
