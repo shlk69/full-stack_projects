@@ -16,4 +16,23 @@ export const authValidation = [
 ];
 
 
+export const projectValidation = [
+    body('name')
+        .trim()
+        .notEmpty().withMessage('Project name is required')
+        .isLength({ min: 3 }).withMessage('Project name must be at least 3 characters long')
+        .isLength({ max: 50 }).withMessage('Project name cannot exceed 50 characters'),
+
+    body('users')
+        .isArray({ min: 1 }).withMessage('Users must be an array with at least one user')
+        .custom((value) => {
+            const isValidObjectId = value.every(id => /^[0-9a-fA-F]{24}$/.test(id));
+            if (!isValidObjectId) {
+                throw new Error('One or more user IDs are invalid');
+            }
+            return true;
+        })
+];
+
+
 

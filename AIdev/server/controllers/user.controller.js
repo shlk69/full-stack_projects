@@ -1,5 +1,4 @@
 import { User } from "../models/user.model.js";
-import { validationResult } from "express-validator";
 import { redisClient } from "../services/redis.service.js";
 
 const cookieOptions = {
@@ -10,13 +9,6 @@ const cookieOptions = {
 };
 
 export const createUserController = async (req, res) => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            message: errors.array()[0].msg,
-        });
-    }
 
     try {
         const { email, password } = req.body;
@@ -32,6 +24,8 @@ export const createUserController = async (req, res) => {
         const user = await User.create({ email, password });
 
         const token = await user.generateJwt();
+        delete user._doc.password
+
 
         res.cookie("token", token, cookieOptions);
 
@@ -48,13 +42,6 @@ export const createUserController = async (req, res) => {
 };
 
 export const loginUserController = async (req, res) => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            message: errors.array()[0].msg,
-        });
-    }
 
     try {
         const { email, password } = req.body;

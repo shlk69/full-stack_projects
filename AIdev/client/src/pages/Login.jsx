@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../config/axios";
 import { toast } from "react-hot-toast";
 import Loader from "../component/Loader";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { UserContext } from "../context/user.context";
+
+
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,7 +15,9 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+
   const navigate = useNavigate();
+  const {setUser} = useContext(UserContext)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +31,9 @@ const Login = () => {
         password,
       });
 
+
+      localStorage.setItem('token', resizeBy.data.token)
+      setUser(res.data.user)
       toast.success("Logged in successfully");
       navigate("/dashboard");
     } catch (error) {
