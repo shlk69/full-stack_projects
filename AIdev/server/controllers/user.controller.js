@@ -1,117 +1,115 @@
-import { User } from "../models/user.model.js";
-import { redisClient } from "../services/redis.service.js";
+import userModel from '../models/user.model.js';
+import * as userService from '../services/user.service.js';
+import { validationResult } from 'express-validator';
+import redisClient from '../services/redis.service.js';
 
-const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 1000 * 60 * 60 * 24,
-};
 
 export const createUserController = async (req, res) => {
 
-    try {
-        const { email, password } = req.body;
+    const errors = validationResult(req);
 
-        const alreadyExists = await User.findOne({ email });
-
-        if (alreadyExists) {
-            return res.status(409).json({
-                message: "User already exists",
-            });
-        }
-
-        const user = await User.create({ email, password });
-
-        const token = await user.generateJwt();
-        delete user._doc.password
-
-
-        res.cookie("token", token, cookieOptions);
-
-        return res.status(201).json({
-            user,
-            token,
-            message: "User registered successfully",
-        });
-    } catch (error) {
-        return res.status(500).json({
-            message: error.message || "Internal server error",
-        });
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
-};
+    try {
+        const user = await userService.createUser(req.body);
 
-export const loginUserController = async (req, res) => {
+        const token = await user.generateJWT();
+
+        delete user._doc.password;
+
+        res.status(201).json({ user, token });
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+}
+
+export const loginController = async (req, res) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
 
     try {
+
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+        const user = await userModel.findOne({ email }).select('+password');
 
         if (!user) {
             return res.status(401).json({
-                message: "Invalid credentials",
-            });
+                errors: 'Invalid credentials'
+            })
         }
 
-        const isMatching = await user.isValidPassword(password);
+        const isMatch = await user.isValidPassword(password);
 
-        if (!isMatching) {
+        if (!isMatch) {
             return res.status(401).json({
-                message: "Invalid credentials",
-            });
+                errors: 'Invalid credentials'
+            })
         }
 
-        const token = await user.generateJwt();
-        delete user._doc.password
+        const token = await user.generateJWT();
 
-        res.cookie("token", token, cookieOptions);
+        delete user._doc.password;
 
-        return res.status(200).json({
-            user,
-            token,
-            message: "User logged in successfully",
-        });
-    } catch (error) {
-        return res.status(500).json({
-            message: error.message || "Internal server error",
-        });
+        res.status(200).json({ user, token });
+
+
+    } catch (err) {
+
+        console.log(err);
+
+        res.status(400).send(err.message);
     }
-};
+}
 
 export const profileController = async (req, res) => {
-    return res.status(200).json({
-        user: req.user,
+
+    res.status(200).json({
+        user: req.user
     });
-};
 
-export const logoutUserController = async (req, res) => {
+}
+
+export const logoutController = async (req, res) => {
     try {
-        const token =
-            req.cookies?.token ||
-            req.headers.authorization?.split(" ")[1];
 
-        if (!token) {
-            return res.status(400).json({
-                message: "No active session found",
-            });
-        }
+        const token = req.cookies.token || req.headers.authorization.split(' ')[1];
 
-        // Add token to Redis blocklist for 24 hours
-        await redisClient.set(token, "logout", "EX", 60 * 60 * 24);
+        redisClient.set(token, 'logout', 'EX', 60 * 60 * 24);
 
-        res.clearCookie("token", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+        res.status(200).json({
+            message: 'Logged out successfully'
         });
+
+
+    } catch (err) {
+        console.log(err);
+        res.status(400).send(err.message);
+    }
+}
+
+export const getAllUsersController = async (req, res) => {
+    try {
+
+        const loggedInUser = await userModel.findOne({
+            email: req.user.email
+        })
+
+        const allUsers = await userService.getAllUsers({ userId: loggedInUser._id });
 
         return res.status(200).json({
-            message: "User logged out successfully",
-        });
-    } catch (error) {
-        return res.status(500).json({
-            message: error.message || "Internal server error",
-        });
+            users: allUsers
+        })
+
+    } catch (err) {
+
+        console.log(err)
+
+        res.status(400).json({ error: err.message })
+
     }
-};
+}
