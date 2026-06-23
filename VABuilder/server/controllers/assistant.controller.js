@@ -1,185 +1,109 @@
 import { generateGeminiResponse } from "../config/gemini.js"
 import { User } from "../models/user.model.js"
+import { catchAsync } from '../utils/catchAsync.js'
+import { successResponse, errorResponse } from '../utils/ApiResponse.js'
+import logger from '../utils/logger.js'
 
-export const getAssistantConfig = async (req, res) => {
-    try {
-        const { userId } = req.params
-        const user = await User.findById(userId).select('-geminiApiKey')
-        if (!user) {
-            return res.status(404).json({
-                message:'User not found'
-            })
-        }
-        
-        return res.status(200).json({
-            message: 'Assistant configuration complete',
-            user
-        })
+export const getAssistantConfig = catchAsync(async (req, res) => {
+    const { userId } = req.params
+    const user = await User.findById(userId).select('-geminiApiKey')
 
-    } catch (error) {
-        console.log('Assistant config error :', error.message)
-        return res.status(500).json({
-            message:'Error while configuring assistant'
-        })
+    if (!user) {
+        return errorResponse(res, 'User not found', null, 404)
     }
-}
 
+    return successResponse(res, user, 'Assistant configuration fetched', 200)
+})
 
-export const askAssistant = async (req, res) => {
+export const askAssistant = catchAsync(async (req, res) => {
+    const { message, userId } = req.body
 
-    try {
-        const { message, userId } = req.body
-        
-        if (!message || !userId) {
-            return res.status(400).json({ message: "Message and UserId are required" })
-        }
-        
-        const user = await User.findById(userId)
-        
-        if (!user) {
-            return res.status(404).json({ message: "User not found" })
-        }
-        if (!user.geminiApiKey) {
-            return res.status(404).json({ message: "gemini api key is not added" })
-        }
-        
-        if (user.plan === "free"
-            && user.totalMessages >= user.requestLimit) {
-                return res.status(400).json({ message: "Free limit reached" })
-            }
-            
-            if (user.plan === "pro" && new Date(user.proExpiresAt) < new Date()) {
-                user.plan = "free"
-                
-                await user.save()
-                
-                return res.status(400).json({ message: "Pro plan expired" })
-            }
-            
-            const cleanMessage = message.toLowerCase()
-            
-            if (user.enableNavigation) {
-                
-                const navigationWords = [
-                    "open",
-                    "go",
-                    "start",
-                    "show",
-                    "navigate",
-                    "take me",
-                ];
-                
-                // Check navigation intent
-                const wantsNavigation =
-                navigationWords.some((word) =>
+    if (!message || !userId) {
+        return errorResponse(res, 'Message and UserId are required', null, 400)
+    }
 
-                    cleanMessage.startsWith(word)
-                );
-                
-                if (wantsNavigation) {
-                    
-                    const matchedPage =
-                    user.pages.find((page) =>
-                        
-                        page.keywords.some((keyword) =>
-                            
-                            cleanMessage.includes(
-                                keyword.toLowerCase()
-                            )
-                        )
-                    )
-                    
-                    if (matchedPage) {
-                        if (
-                            req.body.currentPath ===
-                            matchedPage.path
-                        ) {
-                            
-                            return res.json({
-                                
-                                success: true,
-                                
-                                response:
-                                `${matchedPage.name} already open`
-                                
-                            });
-                        }
-                    }
-                    if (!matchedPage) {
-                        return res.status(404).json({
-                            success: false,
-                            response: "Sorry, I couldn't find that page."
-                        });
-                    }
-                    
-                    return res.json({
-                        
-                        success: true,
-                        
-                        action: "navigate",
-                        
-                        path: matchedPage.path,
-                        
-                        response:
-                        `Opening ${matchedPage.name}`,
-                        
-                    });
+    const user = await User.findById(userId)
+
+    if (!user) {
+        return errorResponse(res, 'User not found', null, 404)
+    }
+
+    if (!user.geminiApiKey) {
+        return errorResponse(res, 'Gemini API key is not configured', null, 404)
+    }
+
+    if (user.plan === "free" && user.totalMessages >= user.requestLimit) {
+        return errorResponse(res, 'Free tier message limit reached', null, 400)
+    }
+
+    if (user.plan === "pro" && new Date(user.proExpiresAt) < new Date()) {
+        user.plan = "free"
+        await user.save()
+        return errorResponse(res, 'Pro plan has expired. Plan downgraded to free.', null, 400)
+    }
+
+    const cleanMessage = message.toLowerCase()
+
+    // Navigation Logic
+    if (user.enableNavigation) {
+        const navigationWords = ["open", "go", "start", "show", "navigate", "take me"]
+        const wantsNavigation = navigationWords.some((word) => cleanMessage.startsWith(word))
+
+        if (wantsNavigation) {
+            const matchedPage = user.pages.find((page) =>
+                page.keywords.some((keyword) => cleanMessage.includes(keyword.toLowerCase()))
+            )
+
+            if (matchedPage) {
+                if (req.body.currentPath === matchedPage.path) {
+                    return successResponse(res, {
+                        response: `${matchedPage.name} already open`
+                    }, 'Page already open', 200)
                 }
-                
+                return successResponse(res, {
+                    action: "navigate",
+                    path: matchedPage.path,
+                    response: `Opening ${matchedPage.name}`
+                }, 'Navigation request', 200)
             }
-            
-            
-            const prompt = `
-            
-            You are ${user.assistantName}.
-            
-            Buisness Name:
-            ${user.buisnessName}
-            
-            Buisness Type:
-            ${user.buisnessType}
-            
-            bBisness Description:
-            ${user.buisnessDescription}
-            
-            Assistant Tone:
-            ${user.tone}
-            '
-            
-            Rules:
-            
-            - Keep replies under 15 words
-            - Give fast direct responses
-            - Talk naturally
-            - Behave like smart voice assistant
-            - Avoid long explanations
-            - Keep responses short for quick voice playback
-            
-            User Question:
-            ${message}
-            
-            `
-            
-            const aiResponse = await generateGeminiResponse({prompt, apikey:user.geminiApiKey, user} )
-            
-            if (user.plan === "free") {
-                user.totalMessages += 1
-                
-                await user.save()
-                
+
+            if (!matchedPage) {
+                return errorResponse(res, "Couldn't find that page", null, 404)
             }
-            return res.json({
-            success: true,
-            aiResponse
-        });
-
-    } catch (error) {
-        console.log(error.message)
-
-        return res.status(500).json({
-            success: false,
-            message:
-                "Assistant AI Error : "+error.message,
-        })
+        }
     }
-}
+
+    // Generate AI Response
+    const prompt = `
+You are ${user.assistantName}.
+
+Business Name: ${user.buisnessName}
+Business Type: ${user.buisnessType}
+Business Description: ${user.buisnessDescription}
+Assistant Tone: ${user.tone}
+
+Rules:
+- Keep replies under 15 words
+- Give fast direct responses
+- Talk naturally
+- Behave like a smart voice assistant
+- Avoid long explanations
+- Keep responses short for quick voice playback
+
+User Question: ${message}
+`
+
+    const aiResponse = await generateGeminiResponse({
+        prompt,
+        apikey: user.geminiApiKey,
+        user
+    })
+
+    if (user.plan === "free") {
+        user.totalMessages += 1
+        await user.save()
+        logger.info(`Free user message count: ${user.totalMessages}`)
+    }
+
+    return successResponse(res, { aiResponse }, 'Assistant response generated', 200)
+})
