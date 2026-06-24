@@ -89,8 +89,8 @@ const Builder = ({ user, setUser }) => {
         },
       );
 
-      setUser(res.data.user);
-      console.log(res.data.user)
+      setUser(res.data.data.user);
+      console.log(res.data.data.user)
       setEditAssistant(false);
 
       toast.success("Assistant saved successfully");

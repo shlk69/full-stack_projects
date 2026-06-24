@@ -83,7 +83,7 @@ Business Description: ${user.buisnessDescription}
 Assistant Tone: ${user.tone}
 
 Rules:
-- Keep replies under 15 words
+- Keep replies clear , concise and on point 
 - Give fast direct responses
 - Talk naturally
 - Behave like a smart voice assistant

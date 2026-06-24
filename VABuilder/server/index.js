@@ -27,7 +27,9 @@ const app = express()
 const isProduction = process.env.NODE_ENV === 'production'
 
 // Security Middleware
-app.use(helmet())
+app.use(helmet({
+    crossOriginOpenerPolicy: false,
+}))
 app.use(compression())
 app.use(morgan('combined'))
 

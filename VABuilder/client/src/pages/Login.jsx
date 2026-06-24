@@ -5,12 +5,12 @@ import { FcGoogle } from "react-icons/fc";
 import logo from "../assets/newlogo.png";
 import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../utils/firebase";
-import axios from 'axios'
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-const Login = ({setUser}) => {
-    const navigate = useNavigate()
+const Login = ({ setUser }) => {
+  const navigate = useNavigate();
   const features = [
     {
       icon: <HiOutlineMicrophone />,
@@ -32,30 +32,35 @@ const Login = ({setUser}) => {
       title: "Fast response",
       desc: "Optimized Gemini AI responses.",
     },
-    ];
-    
-  const handleLogin = async () => {
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const { displayName, email } = result.user;
+  ];
 
-        const response = await axios.post(
-          `${import.meta.env.VITE_SERVER_URL}/api/auth/google`,
-          {
-            name: displayName,
-            email,
-          },
-          { withCredentials: true },
-        );
-        localStorage.setItem("token", response.data.token);
-        setUser(response.data.user)
-        toast.success('Logged in successfully')
+  const handleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const { displayName, email } = result.user;
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_SERVER_URL}/api/auth/google`,
+        {
+          name: displayName,
+          email,
+        },
+        { withCredentials: true },
+      );
+      localStorage.setItem("token", response.data.data.token);
+
+      setUser(response.data.data.user);
+      toast.success("Logged in successfully");
+
+      // Wait longer to ensure state propagates through component tree
+      setTimeout(() => {
         navigate("/");
-      } catch (error) {
-        toast.error('Login failed')
-        console.log(error.message);
-      }
-    };
+      }, 300);
+    } catch (error) {
+      toast.error("Login failed");
+      console.log(error.message);
+    }
+  };
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-white to-emerald-50 flex items-center justify-center p-6 md:p-12 overflow-x-hidden">
       <div className="w-full max-w-7xl mx-auto">
@@ -80,7 +85,9 @@ const Login = ({setUser}) => {
               close sales.
             </p>
 
-            <button onClick={handleLogin} className="mt-8 h-14 sm:h-16 px-8 self-start rounded-2xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white text-base sm:text-lg font-semibold flex items-center gap-4 shadow-[0_20px_50px_rgba(139,92,246,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer">
+            <button
+              onClick={handleLogin}
+              className="mt-8 h-14 sm:h-16 px-8 self-start rounded-2xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white text-base sm:text-lg font-semibold flex items-center gap-4 shadow-[0_20px_50px_rgba(139,92,246,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer">
               <div className="w-8 h-8 flex items-center justify-center bg-white rounded-full p-1.5 shrink-0">
                 <FcGoogle className="w-full h-full" />
               </div>

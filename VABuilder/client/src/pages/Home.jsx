@@ -30,7 +30,7 @@ const STEPS = [
 const Home = ({ user }) => {
   const navigate = useNavigate()
   return (
-    <div clasName="min-h-screen bg-[#f8fafc] overflow-hidden">
+    <div className="min-h-screen bg-[#f8fafc] overflow-hidden">
       <section className="relative overflow-hidden px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 lg:pt-24 pb-20">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-white to-emerald-50" />
 
