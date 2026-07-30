@@ -92,9 +92,9 @@ const Sidebar = ({ sidebar, setSidebar }) => {
           <div>
             <h1 className="text-sm font-medium">{user.fullName}</h1>
             <p className="text-xs text-gray-500">
-              {user.publicMetadata && user.publicMetadata.plan === "Premium"
-                ? "Premium Plan"
-                : "Free Plan"}
+              <Show when={{ plan: "premium" }} fallback={<>Free/Standard</>}>
+                Premium
+              </Show>
             </p>
           </div>
         </div>
