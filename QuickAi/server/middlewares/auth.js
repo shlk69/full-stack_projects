@@ -1,41 +1,54 @@
-import { clerkClient, getAuth } from "@clerk/express"; 
+import { clerkClient, getAuth } from "@clerk/express";
 
 export const auth = async (req, res, next) => {
     try {
-        //  Use getAuth(req) instead of req.auth
         const authData = getAuth(req);
 
-        //  Guard rail against unauthenticated tokens
-        if (!authData || !authData.userId) {
+
+        console.log("Authenticated:", authData.isAuthenticated);
+        console.log("Token Type:", authData.tokenType);
+        console.log("Authorization:", req.headers.authorization?.slice(0, 30));
+
+        if (!authData?.userId) {
             return res.status(401).json({
                 success: false,
-                message: "Unauthorized. Please log in first."
+                message: "Unauthorized. Please log in first.",
             });
         }
 
         const { userId, has } = authData;
 
-        //  Verify your premium plan checking function
-        const hasPremiumPlan = await has({ plan: 'premium' });
+        // Make auth available to controllers
+        req.auth = authData;
 
-        //  Fetch user data safely
+        const hasPremiumPlan = await has({ plan: "premium" });
+
         const user = await clerkClient.users.getUser(userId);
 
-        if (!hasPremiumPlan && user.privateMetadata.free_usage) {
-            req.free_usage = user.privateMetadata.free_usage;
+        const freeUsage = Number(user.privateMetadata?.free_usage || 0);
+
+        if (!hasPremiumPlan && freeUsage > 0) {
+            req.free_usage = freeUsage;
         } else {
             await clerkClient.users.updateUserMetadata(userId, {
                 privateMetadata: {
-                    free_usage: 0
-                }
+                    ...user.privateMetadata,
+                    free_usage: 0,
+                },
             });
+
             req.free_usage = 0;
         }
 
-        req.plan = hasPremiumPlan ? 'premium' : 'free';
-        next();
+        req.plan = hasPremiumPlan ? "premium" : "free";
 
+        next();
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Auth Middleware Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
     }
 };

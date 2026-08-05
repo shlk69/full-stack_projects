@@ -1,6 +1,4 @@
-import { useEffect } from "react"; // 1. Added useEffect
 import { Show, useClerk, useUser } from "@clerk/react";
-
 import {
   Eraser,
   FileText,
@@ -29,17 +27,12 @@ const Sidebar = ({ sidebar, setSidebar }) => {
   const { isLoaded, user } = useUser();
   const { signOut, openUserProfile } = useClerk();
 
-  // 2. Added profile sync loop to fetch newly updated payment data from Clerk's servers instantly
-  useEffect(() => {
-    if (isLoaded && user) {
-      user.reload();
-    }
-  }, [isLoaded, user]);
-
   if (!isLoaded) {
     return (
       <div
-        className={`w-60 bg-white border-r border-gray-200 flex flex-col justify-between items-center max-sm:absolute top-14 bottom-0 ${sidebar ? "translate-x-0" : "max-sm:-translate-x-full"} transition-all duration-300 ease-in-out`}>
+        className={`w-60 bg-white border-r border-gray-200 flex flex-col justify-between items-center max-sm:absolute top-14 bottom-0 ${
+          sidebar ? "translate-x-0" : "max-sm:-translate-x-full"
+        } transition-all duration-300 ease-in-out`}>
         <div className="my-7 w-full flex flex-col items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-gray-200 animate-pulse" />
           <div className="w-24 h-4 bg-gray-200 rounded animate-pulse" />
@@ -52,18 +45,19 @@ const Sidebar = ({ sidebar, setSidebar }) => {
 
   return (
     <div
-      className={`w-60 bg-white border-r border-gray-200 flex flex-col justify-between items-center max-sm:absolute top-14 bottom-0 ${sidebar ? "translate-x-0" : "max-sm:-translate-x-full"} transition-all duration-300 ease-in-out`}>
+      className={`w-60 bg-white border-r border-gray-200 flex flex-col justify-between items-center max-sm:absolute top-14 bottom-0 ${
+        sidebar ? "translate-x-0" : "max-sm:-translate-x-full"
+      } transition-all duration-300 ease-in-out`}>
       <div className="my-7 w-full">
         <img
           src={user.imageUrl}
           alt="User avatar"
           className="w-12 h-12 rounded-full mx-auto object-cover"
         />
+
         <h1 className="mt-1 text-center font-medium">{user.fullName}</h1>
 
         <div className="px-6 mt-5 text-sm text-gray-600 font-medium">
-          {" "}
-          {/* Fixed tiny typo in 'texxt-sm' */}
           {navItems.map(({ to, label, Icon }) => (
             <NavLink
               key={to}
@@ -71,7 +65,11 @@ const Sidebar = ({ sidebar, setSidebar }) => {
               end={to === "/ai"}
               onClick={() => setSidebar(false)}
               className={({ isActive }) =>
-                `px-3.5 py-2.5 flex items-center gap-3 rounded ${isActive ? "bg-gradient-to-r from-[#3C81F6] to-[#9234EA] text-white" : ""}`
+                `px-3.5 py-2.5 flex items-center gap-3 rounded ${
+                  isActive
+                    ? "bg-gradient-to-r from-[#3C81F6] to-[#9234EA] text-white"
+                    : ""
+                }`
               }>
               {({ isActive }) => (
                 <>
@@ -88,9 +86,15 @@ const Sidebar = ({ sidebar, setSidebar }) => {
         <div
           onClick={openUserProfile}
           className="flex gap-2 items-center cursor-pointer">
-          <img src={user.imageUrl} className="w-8 rounded-full" alt="" />
+          <img
+            src={user.imageUrl}
+            className="w-8 h-8 rounded-full object-cover"
+            alt=""
+          />
+
           <div>
             <h1 className="text-sm font-medium">{user.fullName}</h1>
+
             <p className="text-xs text-gray-500">
               <Show when={{ plan: "premium" }} fallback={<>Free/Standard</>}>
                 Premium
@@ -98,8 +102,9 @@ const Sidebar = ({ sidebar, setSidebar }) => {
             </p>
           </div>
         </div>
+
         <LogOut
-          onClick={signOut}
+          onClick={() => signOut()}
           className="w-4 h-4 text-gray-400 hover:text-gray-700 transition cursor-pointer"
         />
       </div>

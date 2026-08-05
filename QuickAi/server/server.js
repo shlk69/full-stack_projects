@@ -9,13 +9,18 @@ import userRouter from './routes/userRoutes.js'
 const app = express()
 await connectCloudinary()
 
-app.use(cors())
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.use(express.json())
 app.use(clerkMiddleware())
 
 app.get('/', (req, res) => {
     res.send('Server is live')
 })
+
 
 app.use('/api/ai',aiRouter)
 app.use('/api/user',userRouter)
