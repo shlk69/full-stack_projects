@@ -180,7 +180,7 @@ export const generateImage = async (req, res) => {
 
 export const removeBackground = async (req, res) => {
     try {
-        const {image} = req.file
+        const image = req.file
         const plan = req.plan;
 
         // Extract userId (Assuming it comes from Clerk middleware via req.auth)
@@ -224,7 +224,7 @@ export const removeBackground = async (req, res) => {
 
 export const removeImageObject = async (req, res) => {
     try {
-        const { image } = req.file
+        const  image  = req.file
         const { object } = req.body
         const plan = req.plan;
 
