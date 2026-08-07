@@ -58,8 +58,9 @@ export const generateArticle = async (req, res) => {
         return res.status(200).json({ success: true, content });
 
     } catch (error) {
-        console.error(error.message);
-        return res.status(500).json({ success: false, message: 'Internal server error.' });
+        console.error("generateArticle error:", error.message);
+        const is429 = error.message?.includes('429') || error.status === 429;
+        return res.status(500).json({ success: false, message: is429 ? 'AI rate limit reached. Please wait a moment and try again.' : error.message || 'Internal server error.' });
     }
 };
 
@@ -110,8 +111,9 @@ export const generateBlogTitle = async (req, res) => {
         return res.status(200).json({ success: true, content });
 
     } catch (error) {
-        console.error(error.message);
-        return res.status(500).json({ success: false, message: 'Internal server error.' });
+        console.error("generateBlogTitle error:", error.message);
+        const is429 = error.message?.includes('429') || error.status === 429;
+        return res.status(500).json({ success: false, message: is429 ? 'AI rate limit reached. Please wait a moment and try again.' : error.message || 'Internal server error.' });
     }
 }
 
@@ -136,32 +138,53 @@ export const generateImage = async (req, res) => {
             return res.status(403).json({ success: false, message: 'This feature is available for only Premium users.' });
         }
 
-        const response = await openai.chat.completions.create({
-            model: "gemini-3.6-flash",
-            messages: [
-                {
-                    role: "user",
-                    content: prompt,
+        let enhancedPrompt = prompt;
+        try {
+            const response = await openai.chat.completions.create({
+                model: "gemini-3.6-flash",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are an image prompt enhancer. Your ONLY job is to take the user's image description and make it more detailed and vivid for an AI image generator. STRICTLY preserve the original subject, style, and intent. DO NOT change the subject. DO NOT add unrelated elements. Return ONLY the enhanced prompt text, nothing else. Keep it under 250 characters."
+                    },
+                    {
+                        role: "user",
+                        content: `Enhance this image prompt while keeping the same subject and style: "${prompt}"`,
+                    },
+                ],
+                temperature: 0.4,
+                max_completion_tokens: 150
+            });
+            enhancedPrompt = response.choices[0]?.message?.content?.trim() || prompt;
+            console.log("Original prompt:", prompt);
+            console.log("Enhanced prompt:", enhancedPrompt);
+        } catch (geminiError) {
+            console.log("Gemini API call failed, using raw prompt:", geminiError.message);
+        }
+
+        let imageSource;
+        try {
+            const formData = new FormData();
+            formData.append('prompt', enhancedPrompt);
+            const { data } = await axios.post('https://clipdrop-api.co/text-to-image/v1', formData, {
+                headers: {
+                    'x-api-key': process.env.CLIPDROP_API_KEY,
                 },
-            ],
-            temperature: 0.7,
-            max_completion_tokens: 100
+                responseType: 'arraybuffer'
+            });
+            imageSource = `data:image/png;base64,${Buffer.from(data).toString('base64')}`;
+            console.log("Clipdrop image generated successfully");
+        } catch (clipdropError) {
+            console.log("Clipdrop failed:", clipdropError.message, "— using Pollinations AI");
+            // Upload the Pollinations URL directly to Cloudinary (no base64 needed)
+            imageSource = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=512&height=512&nologo=true&seed=${Date.now()}`;
+            console.log("Using Pollinations URL:", imageSource);
+        }
+
+        const { secure_url } = await cloudinary.uploader.upload(imageSource, {
+            resource_type: 'image',
+            folder: 'quickai'
         });
-
-        const formData = new FormData()
-        formData.append('prompt', prompt)
-       const data =  await axios.post('https://clipdrop-api.co/text-to-image/v1', formData, {
-            headers: {
-                'x-api-key': process.env.CLIPDROP_API_KEY,
-
-            },
-            responseType:'arraybuffer'
-        })
-
-        const base64Image = `data:image/png;base64,${Buffer.from(data, 'binary').toString('base64')}`
-        
-
-        const { secure_url} = await cloudinary.uploader.upload(base64Image)
 
         // Save to Database
         await sql`insert into creations (user_id,prompt,content,type,publish) values(${userId}, ${prompt}, ${secure_url}, 'image',${publish ?? false})`;
@@ -171,7 +194,7 @@ export const generateImage = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        return res.status(500).json({ success: false, message: 'Internal server error.' });
+        return res.status(500).json({ success: false, message: error.message || 'Internal server error.' });
     }
 }
 
@@ -196,14 +219,20 @@ export const removeBackground = async (req, res) => {
 
         
 
-        const { secure_url } = await cloudinary.uploader.upload(image.path, {
-            transformation: [
-                {
-                    effect: 'background_removal',
-                    background_removal: 'remove_the_background'
-                }
-            ]
-        })
+        const imageBuffer = fs.readFileSync(image.path);
+        const formData = new FormData();
+        formData.append('image_file', new Blob([imageBuffer]), image.originalname || 'image.png');
+
+        const { data } = await axios.post('https://clipdrop-api.co/remove-background/v1', formData, {
+            headers: {
+                'x-api-key': process.env.CLIPDROP_API_KEY,
+            },
+            responseType: 'arraybuffer'
+        });
+
+        const base64Image = `data:image/png;base64,${Buffer.from(data).toString('base64')}`;
+
+        const { secure_url } = await cloudinary.uploader.upload(base64Image);
 
 
 
@@ -215,7 +244,7 @@ export const removeBackground = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        return res.status(500).json({ success: false, message: 'Internal server error.' });
+        return res.status(500).json({ success: false, message: error.message || 'Internal server error.' });
     }
 }
 
@@ -241,16 +270,31 @@ export const removeImageObject = async (req, res) => {
 
 
 
-        const { public_id } = await cloudinary.uploader.upload(image.path)
+        const imageBuffer = fs.readFileSync(image.path);
+        const imageBlob = new Blob([imageBuffer], { type: image.mimetype || 'image/png' });
 
-        const imageUrl = cloudinary.url(public_id, {
-            transformation: [
-                {
-                    effect:`gen_remove:${object}`
-                }
-            ],
-            resource_type:'image'
-        })
+        // Use Cloudinary uploader with eager gen_remove transformation
+        const uploadResult = await cloudinary.uploader.upload(image.path);
+
+        // Force gen_remove transformation via explicit call
+        let imageUrl;
+        try {
+            const transformResult = await cloudinary.uploader.explicit(uploadResult.public_id, {
+                type: 'upload',
+                eager: [
+                    { effect: `gen_remove:${object}` }
+                ],
+                eager_async: false
+            });
+            imageUrl = transformResult.eager?.[0]?.secure_url || uploadResult.secure_url;
+            console.log("Object removed via Cloudinary gen_remove:", imageUrl);
+        } catch (transformError) {
+            console.log("Cloudinary gen_remove failed:", transformError.message);
+            return res.status(500).json({ 
+                success: false, 
+                message: "Object removal requires Cloudinary AI Add-on. Please enable 'Generative Remove' in your Cloudinary dashboard." 
+            });
+        }
 
 
 
@@ -262,7 +306,7 @@ export const removeImageObject = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        return res.status(500).json({ success: false, message: 'Internal server error.' });
+        return res.status(500).json({ success: false, message: error.message || 'Internal server error.' });
     }
 }
 
