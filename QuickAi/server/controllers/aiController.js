@@ -2,11 +2,9 @@ import OpenAI from "openai";
 import sql from "../configs/db.js";
 import { clerkClient } from '@clerk/express';
 import axios from "axios";
-import { v2 as cloudinary } from 'cloudinary'
-import fs from 'fs'
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse');
+import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
+import { PDFParse } from 'pdf-parse';
 
 const openai = new OpenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -292,10 +290,12 @@ export const resumeReview = async (req, res) => {
 
          
 
-        const dataBuffer = fs.readFileSync(resume.path)
-        const pdfData = await pdf(dataBuffer)
+        const dataBuffer = fs.readFileSync(resume.path);
+        const parser = new PDFParse({ data: dataBuffer });
+        const pdfData = await parser.getText();
+        await parser.destroy();
         
-        const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses and area for improvment. Resume Content:\n\n${pdfData.text}`
+        const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses and area for improvement. Resume Content:\n\n${pdfData.text}`;
 
 
         const response = await openai.chat.completions.create({
@@ -307,7 +307,7 @@ export const resumeReview = async (req, res) => {
                 },
             ],
             temperature: 0.7,
-            max_completion_tokens: length
+            max_completion_tokens: 2500
         });
 
         const content = response.choices[0].message.content
@@ -320,6 +320,6 @@ export const resumeReview = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        return res.status(500).json({ success: false, message: 'Internal server error.' });
+        return res.status(500).json({ success: false, message: error.message || 'Internal server error.' });
     }
 }

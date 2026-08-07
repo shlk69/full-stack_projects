@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { FileText, Scissors, Sparkles } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/react";
-import Markdown from 'react-markdown'
+import Markdown from 'react-markdown';
+import toast from 'react-hot-toast';
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -86,7 +87,7 @@ const ReviewResume = () => {
             </div>
           </div>
         ) : (
-          <div className="mt-3 h-full overflow-y-scroll text-sm text-slate-600 ">
+          <div className="mt-3 flex-1 overflow-y-auto text-sm text-slate-600">
             <div className="reset-tw">
               <Markdown>{content}</Markdown>
             </div>

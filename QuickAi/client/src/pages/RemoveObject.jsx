@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Scissors, Sparkles } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/react";
+import toast from 'react-hot-toast';
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -27,7 +28,7 @@ const RemoveObject = () => {
       formData.append("object", object);
 
       const { data } = await axios.post(
-        "/api/ai/remove-image-onject",
+        "/api/ai/remove-image-object",
         formData,
         { headers: { Authorization: `Bearer ${await getToken()}` } },
       );
