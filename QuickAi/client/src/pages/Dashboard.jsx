@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/react";
 import toast from "react-hot-toast";
 import CreationItem from "../components/CreationItem";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 

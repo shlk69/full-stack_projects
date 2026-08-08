@@ -3,11 +3,9 @@ import sql from "../configs/db.js";
 import { clerkClient } from '@clerk/express';
 import FormData from 'form-data';
 import axios from "axios";
-import { v2 as cloudinary } from 'cloudinary'
-import fs from 'fs'
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse');
+import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
+import { PDFParse } from 'pdf-parse';
 
 const openai = new OpenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -112,12 +110,9 @@ Writing style:
             content,
         });
     } catch (error) {
-        console.log(error);
-
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        console.error("generateArticle error:", error.message);
+        const is429 = error.message?.includes('429') || error.status === 429;
+        return res.status(500).json({ success: false, message: is429 ? 'AI rate limit reached. Please wait a moment and try again.' : error.message || 'Internal server error.' });
     }
 };
 
@@ -212,52 +207,15 @@ Example:
             content,
         });
     } catch (error) {
-        console.error(error);
-
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        console.error("generateBlogTitle error:", error.message);
+        const is429 = error.message?.includes('429') || error.status === 429;
+        return res.status(500).json({ success: false, message: is429 ? 'AI rate limit reached. Please wait a moment and try again.' : error.message || 'Internal server error.' });
     }
-};
+}
 
 
 
 
-
-const uploadImageToCloudinary = async (imageBuffer) => {
-    const base64Image = `data:image/png;base64,${imageBuffer.toString("base64")}`;
-
-    try {
-        return await cloudinary.uploader.upload(base64Image, {
-            folder: "ai-images",
-        });
-    } catch (cloudinaryError) {
-        console.warn("Cloudinary upload failed, returning inline image data instead.", cloudinaryError.message);
-        return {
-            secure_url: base64Image,
-        };
-    }
-};
-
-const generateImageWithClipdrop = async (prompt) => {
-    const formData = new FormData();
-    formData.append("prompt", prompt);
-
-    const response = await axios.post("https://clipdrop-api.co/text-to-image/v1", formData, {
-        headers: {
-            "x-api-key": process.env.CLIPDROP_API_KEY,
-            ...formData.getHeaders(),
-        },
-        responseType: "arraybuffer",
-    });
-
-    if (response.status !== 200) {
-        throw new Error(`Clipdrop request failed with status ${response.status}`);
-    }
-
-    return response.data;
-};
 
 export const generateImage = async (req, res) => {
     try {
@@ -280,63 +238,65 @@ export const generateImage = async (req, res) => {
             });
         }
 
-        let uploadResult;
-
+        let enhancedPrompt = prompt;
         try {
-            const response = await openai.images.generate({
-                model: "gemini-2.5-flash-image",
-                prompt,
-                n: 1,
-                response_format: "b64_json",
+            const response = await openai.chat.completions.create({
+                model: "gemini-3.6-flash",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are an image prompt enhancer. Your ONLY job is to take the user's image description and make it more detailed and vivid for an AI image generator. STRICTLY preserve the original subject, style, and intent. DO NOT change the subject. DO NOT add unrelated elements. Return ONLY the enhanced prompt text, nothing else. Keep it under 250 characters."
+                    },
+                    {
+                        role: "user",
+                        content: `Enhance this image prompt while keeping the same subject and style: "${prompt}"`,
+                    },
+                ],
+                temperature: 0.4,
+                max_completion_tokens: 150
             });
-
-            if (!response.data || response.data.length === 0 || !response.data[0]?.b64_json) {
-                throw new Error("No image returned by Gemini.");
-            }
-
-            const imageBuffer = Buffer.from(response.data[0].b64_json, "base64");
-            uploadResult = await uploadImageToCloudinary(imageBuffer);
+            enhancedPrompt = response.choices[0]?.message?.content?.trim() || prompt;
+            console.log("Original prompt:", prompt);
+            console.log("Enhanced prompt:", enhancedPrompt);
         } catch (geminiError) {
-            console.warn("Gemini image generation failed, trying Clipdrop fallback.", geminiError.message);
-
-            if (!process.env.CLIPDROP_API_KEY) {
-                throw new Error("Gemini image generation failed and no Clipdrop API key is configured.");
-            }
-
-            const clipdropBuffer = await generateImageWithClipdrop(prompt);
-            uploadResult = await uploadImageToCloudinary(Buffer.from(clipdropBuffer));
+            console.log("Gemini API call failed, using raw prompt:", geminiError.message);
         }
 
-        await sql`
-      INSERT INTO creations
-      (user_id, prompt, content, type, publish)
-      VALUES
-      (
-        ${userId},
-        ${prompt},
-        ${uploadResult.secure_url},
-        'image',
-        ${publish ?? false}
-      )
-    `;
+        let imageSource;
+        try {
+            const formData = new FormData();
+            formData.append('prompt', enhancedPrompt);
+            const { data } = await axios.post('https://clipdrop-api.co/text-to-image/v1', formData, {
+                headers: {
+                    'x-api-key': process.env.CLIPDROP_API_KEY,
+                },
+                responseType: 'arraybuffer'
+            });
+            imageSource = `data:image/png;base64,${Buffer.from(data).toString('base64')}`;
+            console.log("Clipdrop image generated successfully");
+        } catch (clipdropError) {
+            console.log("Clipdrop failed:", clipdropError.message, "— using Pollinations AI");
+            // Upload the Pollinations URL directly to Cloudinary (no base64 needed)
+            imageSource = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=512&height=512&nologo=true&seed=${Date.now()}`;
+            console.log("Using Pollinations URL:", imageSource);
+        }
+
+        const { secure_url } = await cloudinary.uploader.upload(imageSource, {
+            resource_type: 'image',
+            folder: 'quickai'
+        });
+
+        // Save to Database
+        await sql`insert into creations (user_id,prompt,content,type,publish) values(${userId}, ${prompt}, ${secure_url}, 'image',${publish ?? false})`;
+
 
         return res.status(200).json({
             success: true,
             content: uploadResult.secure_url,
         });
     } catch (error) {
-        console.error("========= IMAGE GENERATION ERROR =========");
-
-        if (error.response) {
-            console.error(error.response.data);
-        }
-
-        console.error(error);
-
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        console.error(error.message);
+        return res.status(500).json({ success: false, message: error.message || 'Internal server error.' });
     }
 };
 
@@ -362,21 +322,33 @@ export const removeBackground = async (req, res) => {
             return res.status(403).json({ success: false, message: 'This feature is available for only Premium users.' });
         }
 
-        const uploadResult = await cloudinary.uploader.upload(image.path, {
-            folder: 'ai-images',
-            background_removal: 'cloudinary_ai',
-            format: 'png',
+
+        
+
+        const imageBuffer = fs.readFileSync(image.path);
+        const formData = new FormData();
+        formData.append('image_file', new Blob([imageBuffer]), image.originalname || 'image.png');
+
+        const { data } = await axios.post('https://clipdrop-api.co/remove-background/v1', formData, {
+            headers: {
+                'x-api-key': process.env.CLIPDROP_API_KEY,
+            },
+            responseType: 'arraybuffer'
         });
 
-        const secure_url = uploadResult.secure_url || uploadResult.url;
+        const base64Image = `data:image/png;base64,${Buffer.from(data).toString('base64')}`;
+
+        const { secure_url } = await cloudinary.uploader.upload(base64Image);
+
+
 
         // Save to Database
         await sql`insert into creations (user_id,prompt,content,type) values(${userId}, 'Remove background from the image', ${secure_url}, 'image')`;
 
         return res.status(200).json({ success: true, content: secure_url });
     } catch (error) {
-        console.error('Remove background error:', error);
-        return res.status(500).json({ success: false, message: 'Internal server error.' });
+        console.error(error.message);
+        return res.status(500).json({ success: false, message: error.message || 'Internal server error.' });
     }
 }
 
@@ -402,16 +374,31 @@ export const removeImageObject = async (req, res) => {
 
 
 
-        const { public_id } = await cloudinary.uploader.upload(image.path)
+        const imageBuffer = fs.readFileSync(image.path);
+        const imageBlob = new Blob([imageBuffer], { type: image.mimetype || 'image/png' });
 
-        const imageUrl = cloudinary.url(public_id, {
-            transformation: [
-                {
-                    effect: `gen_remove:${object}`
-                }
-            ],
-            resource_type: 'image'
-        })
+        // Use Cloudinary uploader with eager gen_remove transformation
+        const uploadResult = await cloudinary.uploader.upload(image.path);
+
+        // Force gen_remove transformation via explicit call
+        let imageUrl;
+        try {
+            const transformResult = await cloudinary.uploader.explicit(uploadResult.public_id, {
+                type: 'upload',
+                eager: [
+                    { effect: `gen_remove:${object}` }
+                ],
+                eager_async: false
+            });
+            imageUrl = transformResult.eager?.[0]?.secure_url || uploadResult.secure_url;
+            console.log("Object removed via Cloudinary gen_remove:", imageUrl);
+        } catch (transformError) {
+            console.log("Cloudinary gen_remove failed:", transformError.message);
+            return res.status(500).json({ 
+                success: false, 
+                message: "Object removal requires Cloudinary AI Add-on. Please enable 'Generative Remove' in your Cloudinary dashboard." 
+            });
+        }
 
 
 
@@ -423,7 +410,7 @@ export const removeImageObject = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        return res.status(500).json({ success: false, message: 'Internal server error.' });
+        return res.status(500).json({ success: false, message: error.message || 'Internal server error.' });
     }
 }
 
@@ -514,39 +501,39 @@ export const resumeReview = async (req, res) => {
         }
 
         if (resume.size > 5 * 1024 * 1024) {
-            return res.status(413).json({ success: false, message: 'Resume file size exceeds allowed size (5MB).' });
+            return res.json({ success: false, message: "Resume file size exceeds allowed size (5MB)." })
         }
 
-        if (resume.mimetype && !resume.mimetype.includes('pdf')) {
-            return res.status(400).json({ success: false, message: 'Only PDF resumes are supported.' });
-        }
+         
 
-        let pdfText = '';
+        const dataBuffer = fs.readFileSync(resume.path);
+        const parser = new PDFParse({ data: dataBuffer });
+        const pdfData = await parser.getText();
+        await parser.destroy();
+        
+        const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses and area for improvement. Resume Content:\n\n${pdfData.text}`;
 
-        try {
-            const dataBuffer = fs.readFileSync(resume.path);
-            const pdfData = await pdfParse(dataBuffer);
-            pdfText = pdfData?.text?.trim() || '';
-        } catch (parseError) {
-            console.warn('Resume PDF parsing failed:', parseError.message);
-            pdfText = '';
-        }
 
-        if (!pdfText) {
-            return res.status(400).json({ success: false, message: 'The uploaded file does not contain readable resume text.' });
-        }
+        const response = await openai.chat.completions.create({
+            model: "gemini-3.6-flash",
+            messages: [
+                {
+                    role: "user",
+                    content: prompt,
+                },
+            ],
+            temperature: 0.7,
+            max_completion_tokens: 2500
+        });
 
-        const content = await generateResumeReview(pdfText);
+        const content = response.choices[0].message.content
 
-        try {
-            await sql`insert into creations (user_id,prompt,content,type) values(${userId}, 'Review the uploaded resume', ${content}, 'resume-review')`;
-        } catch (dbError) {
-            console.warn('Resume review creation save failed:', dbError.message);
-        }
+        // Save to Database
+        await sql`insert into creations (user_id,prompt,content,type) values(${userId}, 'Review the uploaded resume', ${content}, 'resume-review')`;
 
         return res.status(200).json({ success: true, content });
     } catch (error) {
-        console.error('Resume review error:', error);
+        console.error(error.message);
         return res.status(500).json({ success: false, message: error.message || 'Internal server error.' });
     }
 }

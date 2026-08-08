@@ -5,11 +5,7 @@ import sql from "../configs/db.js";
 
 export const getUserCreations = async (req, res) => {
     try {
-        const userId = req.auth?.userId;
-
-        if (!userId) {
-            return res.status(401).json({ success: false, message: "Unauthorized access." });
-        }
+        const { userId } = req.auth;
 
         const creations = await sql`
             SELECT *
@@ -44,7 +40,7 @@ export const getPublishedCreations = async (req, res) => {
 
 export const toggleLikeCreation = async (req, res) => {
     try {
-        const userId = req.auth?.userId;
+        const { userId } = req.auth;
         const { id } = req.body;
 
         if (!userId) {
