@@ -1,9 +1,11 @@
-import { Edit, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import React, { useState } from "react";
+import "github-markdown-css/github-markdown.css";
 import axios from "axios";
 import { useAuth } from "@clerk/react";
 import toast from "react-hot-toast";
 import Markdown from "react-markdown";
+import { Copy, Download, Edit } from "lucide-react";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -20,6 +22,25 @@ const WriteArticle = () => {
   const [content, setContent] = useState("");
 
   const { getToken, isLoaded } = useAuth();
+
+  const downloadMarkdown = () => {
+    if (!content) return;
+
+    const blob = new Blob([content], {
+      type: "text/markdown;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${input || "article"}.md`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+
+    toast.success("Article downloaded");
+  };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
@@ -46,30 +67,10 @@ const WriteArticle = () => {
         return;
       }
 
-      console.log("TOKEN:", token);
-
-      const prompt = `
-Write a professional, SEO-friendly blog article on:
-
-"${input}"
-
-Requirements:
-
-- Length: approximately ${selectedLength.length} words
-- Use Markdown formatting
-- Create a compelling title
-- Write an engaging introduction
-- Use H2 and H3 headings
-- Include examples wherever relevant
-- Use bullet points when appropriate
-- End with a conclusion
-- Write naturally like a human, not AI
-`;
-
       const { data } = await axios.post(
         "/api/ai/generate-article",
         {
-          prompt,
+          topic: input,
           length: selectedLength.length,
         },
         {
@@ -156,22 +157,55 @@ Requirements:
       </form>
 
       {/* Right */}
-      <div className="w-full max-w-lg bg-white rounded-lg border border-gray-200 flex flex-col h-[700px]">
-        <div className="flex items-center gap-3 p-4 border-b">
-          <Edit className="w-5 h-5 text-[#4A7AFF]" />
-          <h1 className="text-xl font-semibold">Generated Article</h1>
+      <div className="w-full flex-1 bg-white rounded-xl border border-gray-200 flex flex-col h-[700px]">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-3">
+            <Edit className="w-5 h-5 text-[#4A7AFF]" />
+            <h1 className="text-xl font-semibold">Generated Article</h1>
+          </div>
+
+          {content && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(content);
+                  toast.success("Article copied");
+                }}
+                className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-gray-100 transition">
+                <Copy className="w-4 h-4" />
+                Copy
+              </button>
+
+              <button
+                onClick={downloadMarkdown}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg bg-gradient-to-r from-[#226BFF] to-[#65ADFF] hover:opacity-90 transition">
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+            </div>
+          )}
         </div>
 
         {!content ? (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-center p-6">
-            Enter a topic and click <br />
-            <strong>Generate Article</strong>
+          <div className="flex flex-col items-center justify-center flex-1 text-gray-400 text-center p-6">
+            <Edit className="w-16 h-16 mb-4 text-gray-300" />
+
+            <h2 className="text-lg font-semibold text-gray-700">
+              No Article Generated
+            </h2>
+
+            <p className="mt-2">Enter a topic and click</p>
+
+            <span className="mt-2 px-4 py-2 rounded-lg bg-blue-50 text-blue-600 font-medium">
+              Generate Article
+            </span>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-5">
-            <div className="reset-tw">
+          <div className="flex-1 overflow-y-auto bg-white">
+            <article className="markdown-body max-w-none p-8">
               <Markdown>{content}</Markdown>
-            </div>
+            </article>
           </div>
         )}
       </div>

@@ -4,11 +4,6 @@ export const auth = async (req, res, next) => {
     try {
         const authData = getAuth(req);
 
-
-        console.log("Authenticated:", authData.isAuthenticated);
-        console.log("Token Type:", authData.tokenType);
-        console.log("Authorization:", req.headers.authorization?.slice(0, 30));
-
         if (!authData?.userId) {
             return res.status(401).json({
                 success: false,
@@ -21,9 +16,17 @@ export const auth = async (req, res, next) => {
         // Make auth available to controllers
         req.auth = authData;
 
-        const hasPremiumPlan = await has({ plan: "premium" });
-
         const user = await clerkClient.users.getUser(userId);
+
+        const storedPlan =
+            user.publicMetadata?.plan ??
+            user.privateMetadata?.plan ??
+            user.publicMetadata?.subscription?.plan ??
+            user.privateMetadata?.subscription?.plan;
+
+        const normalizedPlan = typeof storedPlan === "string" ? storedPlan.toLowerCase() : "";
+        const hasPremiumAccess = normalizedPlan === "premium" || normalizedPlan === "pro" || normalizedPlan === "plus";
+        const hasPremiumPlan = hasPremiumAccess || (await has({ plan: "premium" }));
 
         const freeUsage = Number(user.privateMetadata?.free_usage || 0);
 

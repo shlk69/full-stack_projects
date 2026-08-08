@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/react";
-import { dummyPublishedCreationData } from "../assets/assets";
 import { Heart } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -19,14 +19,19 @@ const Community = () => {
         headers: { Authorization: `Bearer ${await getToken()}` },
       });
       if (data.success) {
-        setCreations(data.creations);
+        setCreations(data.creations || []);
       } else {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Failed to load community creations",
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const imageLikeToggle = async (id) => {
@@ -46,7 +51,11 @@ const Community = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Unable to update like",
+      );
     }
   };
 
@@ -77,12 +86,17 @@ rounded-lg">
                 {creation.prompt}
               </p>
               <div className="flex gap-1 items-center">
-                <p>{creation.likes.length}</p>
+                <p>{(creation.likes || []).length}</p>
                 <Heart
-                  onClick={() => imageLikeToggle(creation.id)}
-                  className={`min-w-5 h-5 hover:scale-110 cursor-pointer $
-        {creation.likes.includes(user.id) ? 'fill-red-500 text-red-600' :
-        'text-white'}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    imageLikeToggle(creation.id);
+                  }}
+                  className={`min-w-5 h-5 hover:scale-110 cursor-pointer ${
+                    (creation.likes || []).includes(user?.id)
+                      ? "fill-red-500 text-red-600"
+                      : "text-white"
+                  }`}
                 />
               </div>
             </div>

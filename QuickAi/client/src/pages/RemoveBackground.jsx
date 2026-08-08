@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { AdIcon, Eraser, Sparkles } from "lucide-react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/react";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
@@ -63,7 +64,7 @@ const RemoveBackground = () => {
         />
 
         <p className="text-xs text-gray-500 font-light mt-1">
-          Supports JPS, PN, and other image formats
+          Supports JPS, PNG, and other image formats
         </p>
 
         <button

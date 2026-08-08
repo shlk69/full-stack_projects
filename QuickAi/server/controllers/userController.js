@@ -5,13 +5,27 @@ import sql from "../configs/db.js";
 
 export const getUserCreations = async (req, res) => {
     try {
-        const { userId } = req.auth()
+        const userId = req.auth?.userId;
 
-        const creations = await sql`SELECT * FROM creations WHERE user_id = ${userId} ORDER BY created_at DESC`;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized access." });
+        }
 
-        res.status(200).json({ success: true, creations });
+        const creations = await sql`
+            SELECT *
+            FROM creations
+            WHERE user_id = ${userId}
+            ORDER BY created_at DESC
+        `;
+
+        return res.status(200).json({
+            success: true,
+            creations,
+            plan: req.plan || "free",
+        });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Get user creations error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
@@ -23,15 +37,19 @@ export const getPublishedCreations = async (req, res) => {
 
         res.status(200).json({ success: true, creations });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
 
 export const toggleLikeCreation = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const userId = req.auth?.userId;
         const { id } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized access." });
+        }
 
         const [creation] = await sql`SELECT * FROM creations WHERE id = ${id}`;
 
@@ -39,27 +57,27 @@ export const toggleLikeCreation = async (req, res) => {
             return res.status(404).json({ success: false, message: "Creation not found" });
         }
 
-        const currentLikes = creation.likes;
+        const currentLikes = Array.isArray(creation.likes) ? creation.likes : [];
         const userIdStr = userId.toString();
         let updatedLikes;
         let message;
 
         if (currentLikes.includes(userIdStr)) {
             updatedLikes = currentLikes.filter((user) => user !== userIdStr);
-            message = 'Creation unliked'
+            message = 'Creation unliked';
         } else {
-            updatedLikes = [...currentLikes, userIdStr]
-            message = 'Creation liked'
+            updatedLikes = [...currentLikes, userIdStr];
+            message = 'Creation liked';
         }
 
-        const formattedArray = `{${updatedLikes.join(',')}`
+        const formattedArray = `{${updatedLikes.join(',')}}`;
 
         await sql`UPDATE creations SET likes = ${formattedArray}::text[] WHERE id = ${id}`;
 
-
-        res.status(200).json({ success: true, message });
+        return res.status(200).json({ success: true, message, likes: updatedLikes });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Toggle like error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 

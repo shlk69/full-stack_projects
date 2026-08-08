@@ -1,13 +1,14 @@
 import React, { useState } from "react";
-import { FileText, Scissors, Sparkles } from "lucide-react";
+import { FileText, Sparkles } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/react";
-import Markdown from 'react-markdown'
+import Markdown from "react-markdown";
+import toast from "react-hot-toast";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
 const ReviewResume = () => {
-  const [input, setInput] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState("");
 
@@ -15,24 +16,37 @@ const ReviewResume = () => {
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+
+    if (!selectedFile) {
+      toast.error("Please choose a PDF resume first.");
+      return;
+    }
+
     try {
       setLoading(true);
       const formData = new FormData();
-      formData.append("resume", input);
+      formData.append("resume", selectedFile);
 
       const { data } = await axios.post("/api/ai/resume-review", formData, {
-        headers: { Authorization: `Bearer ${await getToken()}` },
+        headers: {
+          Authorization: `Bearer ${await getToken()}`,
+        },
       });
 
       if (data.success) {
-        setContent(data.content);
+        setContent(data.content || "No review generated.");
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Unable to review resume");
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Unable to review resume",
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false)
   };
 
   return (
@@ -48,8 +62,7 @@ const ReviewResume = () => {
         <p className="mt-6 text-sm font-medium">Upload Resume</p>
 
         <input
-          rows={4}
-          onChange={(e) => setInput(e.target.files[0])}
+          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
           type="file"
           accept="application/pdf"
           className="w-full p-2 px-3 mt-2 outline-none text-sm

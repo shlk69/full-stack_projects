@@ -26,19 +26,40 @@ const BlogTitles = () => {
 
   const { getToken, isLoaded } = useAuth();
 
+  const downloadTitles = () => {
+    const blob = new Blob([content], {
+      type: "text/plain",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${input}-titles.txt`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+    toast.success("Downloaded");
+  };
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
     try {
       setLoading(true);
-      const prompt = `Generate a blog title for the keyword ${input} in the category ${selectedCategory}`;
-
       const { data } = await axios.post(
         "/api/ai/generate-blog-title",
-        { prompt },
-        { headers: { Authorization: `Bearer ${await getToken()}` } },
+        {
+          keyword: input,
+          category: selectedCategory,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${await getToken()}`,
+          },
+        },
       );
-
       if (data.success) {
         setContent(data.content);
       } else {
@@ -98,23 +119,71 @@ const BlogTitles = () => {
         </button>
       </form>
       {/* Right col */}
-      <div className="w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 min-h-96 ">
-        <div className="flex items-center gap-3">
-          <Hash className="w-5 h-5 text-[#8e37eb]" />
-          <h1 className="text-xl font-semibold">Generated Titles</h1>
+      <div className="w-full flex-1 bg-white rounded-xl border border-gray-200 flex flex-col h-[700px]">
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-3">
+            <Hash className="w-5 h-5 text-[#8e37eb]" />
+            <h1 className="text-xl font-semibold">Generated Titles</h1>
+          </div>
+
+          {content && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(content);
+                  toast.success("Copied");
+                }}
+                className="px-3 py-2 border rounded-lg hover:bg-gray-100">
+                Copy
+              </button>
+
+              <button
+                onClick={downloadTitles}
+                className="px-3 py-2 rounded-lg text-white bg-gradient-to-r from-[#C341F6] to-[#8E37EB]">
+                Download
+              </button>
+            </div>
+          )}
         </div>
 
         {!content ? (
-          <div className="flex-1 flex justify-center items-center">
-            <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
-              <Hash className="w-9 h-9" />
-              <p>Enter a topic and click “Generated title” to get started</p>
-            </div>
+          <div className="flex flex-col justify-center items-center flex-1 text-gray-400">
+            <Hash className="w-14 h-14 mb-5" />
+
+            <h2 className="text-lg font-semibold">No Titles Generated</h2>
+
+            <p className="mt-2">Enter a keyword and click Generate Title.</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-5">
-            <div className="reset-tw">
-              <Markdown>{content}</Markdown>
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="space-y-4">
+              {content
+                .split(/\n+/)
+                .filter((title) => title.trim() !== "")
+                .map((title, index) => (
+                  <div
+                    key={index}
+                    className="border rounded-xl p-4 hover:border-purple-500 hover:bg-purple-50 transition">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-purple-700">
+                        #{index + 1}
+                      </span>
+
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(title);
+                          toast.success("Copied");
+                        }}
+                        className="text-sm text-purple-600">
+                        Copy
+                      </button>
+                    </div>
+
+                    <p className="mt-2 text-gray-700">
+                      {title.replace(/^\d+\.\s*/, "")}
+                    </p>
+                  </div>
+                ))}
             </div>
           </div>
         )}
