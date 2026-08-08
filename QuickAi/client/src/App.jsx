@@ -1,25 +1,22 @@
-import React from 'react'
-import { Route, Routes } from 'react-router-dom'
-import Home from './pages/Home'
-import Layout from './pages/Layout'
-import Dashboard from './pages/Dashboard'
-import BlogTitles from './pages/BlogTitles'
-import WriteArticle from './pages/WriteArticle'
-import GenerateImages from './pages/GenerateImages'
-import Community from './pages/Community'
-import ReviewResume  from './pages/ReviewResume'
-import RemoveBackground from './pages/RemoveBackground'
-import RemoveObject from './pages/RemoveObject'
-import { useAuth } from '@clerk/react'
-import { useEffect } from 'react'
-import { Toaster } from 'react-hot-toast'
-
-
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import Layout from "./pages/Layout";
+import Dashboard from "./pages/Dashboard";
+import BlogTitles from "./pages/BlogTitles";
+import WriteArticle from "./pages/WriteArticle";
+import GenerateImages from "./pages/GenerateImages";
+import Community from "./pages/Community";
+import RemoveBackground from "./pages/RemoveBackground";
+import RemoveObject from "./pages/RemoveObject";
+import { useAuth } from "@clerk/react";
+import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
 
 const App = () => {
   return (
     <div>
-      <Toaster/>
+      <Toaster />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/ai" element={<Layout />}>
@@ -30,12 +27,11 @@ const App = () => {
           <Route path="generate-images" element={<GenerateImages />} />
           <Route path="remove-background" element={<RemoveBackground />} />
           <Route path="remove-object" element={<RemoveObject />} />
-          <Route path="review-resume" element={<ReviewResume />} />
           <Route path="community" element={<Community />} />
         </Route>
       </Routes>
     </div>
   );
-}
+};
 
-export default App
+export default App;

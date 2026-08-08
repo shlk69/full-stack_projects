@@ -1,24 +1,34 @@
 import React, { useState } from "react";
-import { Scissors, Sparkles } from "lucide-react";
+import { Download, Scissors, Sparkles } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/react";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
-
 
 const RemoveObject = () => {
   const [input, setInput] = useState("");
   const [object, setObject] = useState("");
-   const [loading, setLoading] = useState(false);
-   const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [content, setContent] = useState("");
 
-   const { getToken } = useAuth();
+  const { getToken } = useAuth();
+
+  const handleDownload = () => {
+    if (!content) return;
+
+    const link = document.createElement("a");
+    link.href = content;
+    link.download = "removed-object.png";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     try {
-      setLoading(true)
+      setLoading(true);
       if (object.split(" ").length > 1) {
         return toast("Please enter only one object name");
       }
@@ -38,10 +48,10 @@ const RemoveObject = () => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {      
+    } catch (error) {
       toast.error(error.message);
     }
-    setLoading(false)
+    setLoading(false);
   };
 
   return (
@@ -93,9 +103,20 @@ border-gray-300"
       </form>
       {/* Right col */}
       <div className="w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 min-h-96 ">
-        <div className="flex items-center gap-3">
-          <Scissors className="w-5 h-5 text-[#4a7aff]" />
-          <h1 className="text-xl font-semibold">Processed Image</h1>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Scissors className="w-5 h-5 text-[#4a7aff]" />
+            <h1 className="text-xl font-semibold">Processed Image</h1>
+          </div>
+          {content && (
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="flex items-center gap-2 rounded-md border border-sky-600 px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-50">
+              <Download className="w-4 h-4" />
+              Download
+            </button>
+          )}
         </div>
 
         {!content ? (

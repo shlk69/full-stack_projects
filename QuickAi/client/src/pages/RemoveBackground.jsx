@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { AdIcon, Eraser, Sparkles } from "lucide-react";
+import { AdIcon, Download, Eraser, Sparkles } from "lucide-react";
 import axios from "axios";
-import { toast } from "react-hot-toast";
 import { useAuth } from "@clerk/react";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -14,14 +13,25 @@ const RemoveBackground = () => {
 
   const { getToken } = useAuth();
 
+  const handleDownload = () => {
+    if (!content) return;
+
+    const link = document.createElement("a");
+    link.href = content;
+    link.download = "removed-background.png";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
-  
+
       const formData = new FormData();
       formData.append("image", input);
-  
+
       const { data } = await axios.post(
         "/api/ai/remove-image-background",
         formData,
@@ -29,7 +39,7 @@ const RemoveBackground = () => {
           headers: { Authorization: `Bearer ${await getToken()}` },
         },
       );
-  
+
       if (data.success) {
         setContent(data.content);
       } else {
@@ -38,7 +48,7 @@ const RemoveBackground = () => {
     } catch (error) {
       toast.error(error.message);
     }
-    setLoading(false)
+    setLoading(false);
   };
 
   return (
@@ -82,9 +92,20 @@ const RemoveBackground = () => {
       </form>
       {/* Right col */}
       <div className="w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 min-h-96 ">
-        <div className="flex items-center gap-3">
-          <Eraser className="w-5 h-5 text-[#ff4938]" />
-          <h1 className="text-xl font-semibold">Processed Image</h1>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Eraser className="w-5 h-5 text-[#ff4938]" />
+            <h1 className="text-xl font-semibold">Processed Image</h1>
+          </div>
+          {content && (
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="flex items-center gap-2 rounded-md border border-orange-600 px-3 py-2 text-sm font-medium text-orange-700 transition hover:bg-orange-50">
+              <Download className="w-4 h-4" />
+              Download
+            </button>
+          )}
         </div>
 
         {!content ? (

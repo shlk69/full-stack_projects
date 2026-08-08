@@ -5,7 +5,6 @@ import FormData from 'form-data';
 import axios from "axios";
 import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
-import { PDFParse } from 'pdf-parse';
 
 const openai = new OpenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -292,7 +291,7 @@ export const generateImage = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            content: uploadResult.secure_url,
+            content: secure_url,
         });
     } catch (error) {
         console.error(error.message);
@@ -323,14 +322,17 @@ export const removeBackground = async (req, res) => {
         }
 
 
-        
 
-        const imageBuffer = fs.readFileSync(image.path);
+
         const formData = new FormData();
-        formData.append('image_file', new Blob([imageBuffer]), image.originalname || 'image.png');
+        formData.append('image_file', fs.createReadStream(image.path), {
+            filename: image.originalname || 'image.png',
+            contentType: image.mimetype || 'image/png',
+        });
 
         const { data } = await axios.post('https://clipdrop-api.co/remove-background/v1', formData, {
             headers: {
+                ...formData.getHeaders(),
                 'x-api-key': process.env.CLIPDROP_API_KEY,
             },
             responseType: 'arraybuffer'
@@ -394,9 +396,9 @@ export const removeImageObject = async (req, res) => {
             console.log("Object removed via Cloudinary gen_remove:", imageUrl);
         } catch (transformError) {
             console.log("Cloudinary gen_remove failed:", transformError.message);
-            return res.status(500).json({ 
-                success: false, 
-                message: "Object removal requires Cloudinary AI Add-on. Please enable 'Generative Remove' in your Cloudinary dashboard." 
+            return res.status(500).json({
+                success: false,
+                message: "Object removal requires Cloudinary AI Add-on. Please enable 'Generative Remove' in your Cloudinary dashboard."
             });
         }
 
@@ -408,130 +410,6 @@ export const removeImageObject = async (req, res) => {
 
         return res.status(200).json({ success: true, content: imageUrl });
 
-    } catch (error) {
-        console.error(error.message);
-        return res.status(500).json({ success: false, message: error.message || 'Internal server error.' });
-    }
-}
-
-const buildFallbackResumeReview = (resumeText) => {
-    const text = resumeText.replace(/\s+/g, ' ').trim();
-    const lower = text.toLowerCase();
-
-    const hasSummary = /summary|profile|objective/i.test(lower);
-    const hasExperience = /experience|employment|work|developer|engineer|manager|intern/i.test(lower);
-    const hasSkills = /skills|technologies|tools|languages|frameworks/i.test(lower);
-    const hasEducation = /education|university|college|degree|school|certification/i.test(lower);
-    const hasProjects = /project|projects|portfolio|achievement/i.test(lower);
-
-    const bullets = [
-        hasSummary
-            ? 'Your summary or profile is clear and helps frame your background quickly.'
-            : 'Add a concise professional summary at the top so recruiters can understand your value immediately.',
-        hasExperience
-            ? 'Your experience section is a strong foundation; make sure each role highlights specific results.'
-            : 'Include recent work experience with responsibilities, achievements, and measurable outcomes.',
-        hasSkills
-            ? 'Your skills section is useful, and it can be made even more scannable by grouping related tools together.'
-            : 'List your technical and soft skills in a clear, grouped format to improve readability.',
-        hasEducation
-            ? 'Your education and training details are already present and should remain concise.'
-            : 'Add your academic background and any relevant certifications to strengthen credibility.',
-        hasProjects
-            ? 'Projects or achievements help demonstrate practical impact and are a strong addition.'
-            : 'Highlight projects, internships, or notable accomplishments to make the resume more compelling.'
-    ];
-
-    return `## Resume Review
-
-Here is a practical review based on the content detected in the uploaded resume:
-
-- ${bullets[0]}
-- ${bullets[1]}
-- ${bullets[2]}
-- ${bullets[3]}
-- ${bullets[4]}
-
-### Suggested improvements
-1. Tailor the resume to the target role by matching keywords from the job description.
-2. Quantify achievements with measurable results such as revenue, efficiency, or team impact.
-3. Keep formatting consistent and avoid dense blocks of text.
-4. Prioritize the most relevant experience and move older details lower.
-
-### Overall impression
-The resume has a solid foundation. With clearer positioning, stronger quantified results, and tighter formatting, it will be much more compelling to recruiters and hiring managers.`;
-};
-
-const generateResumeReview = async (resumeText) => {
-    if (!process.env.GEMINI_API_KEY) {
-        return buildFallbackResumeReview(resumeText);
-    }
-
-    try {
-        const response = await openai.chat.completions.create({
-            model: 'gemini-3.6-flash',
-            messages: [{ role: 'user', content: `Review the following resume and provide constructive feedback on its strengths, weaknesses, and areas for improvement. Keep the feedback practical and professional. Resume Content:\n\n${resumeText}` }],
-            temperature: 0.7,
-            max_completion_tokens: 1800,
-        });
-
-        return response.choices?.[0]?.message?.content || buildFallbackResumeReview(resumeText);
-    } catch (error) {
-        console.warn('Gemini resume review failed, using fallback review.', error.message);
-        return buildFallbackResumeReview(resumeText);
-    }
-};
-
-export const resumeReview = async (req, res) => {
-    try {
-        const resume = req.file;
-        const plan = req.plan;
-        const userId = req.auth?.userId;
-
-        if (!userId) {
-            return res.status(401).json({ success: false, message: 'Unauthorized access.' });
-        }
-
-        if (plan !== 'premium') {
-            return res.status(403).json({ success: false, message: 'This feature is available for only Premium users.' });
-        }
-
-        if (!resume) {
-            return res.status(400).json({ success: false, message: 'Please upload a resume file.' });
-        }
-
-        if (resume.size > 5 * 1024 * 1024) {
-            return res.json({ success: false, message: "Resume file size exceeds allowed size (5MB)." })
-        }
-
-         
-
-        const dataBuffer = fs.readFileSync(resume.path);
-        const parser = new PDFParse({ data: dataBuffer });
-        const pdfData = await parser.getText();
-        await parser.destroy();
-        
-        const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses and area for improvement. Resume Content:\n\n${pdfData.text}`;
-
-
-        const response = await openai.chat.completions.create({
-            model: "gemini-3.6-flash",
-            messages: [
-                {
-                    role: "user",
-                    content: prompt,
-                },
-            ],
-            temperature: 0.7,
-            max_completion_tokens: 2500
-        });
-
-        const content = response.choices[0].message.content
-
-        // Save to Database
-        await sql`insert into creations (user_id,prompt,content,type) values(${userId}, 'Review the uploaded resume', ${content}, 'resume-review')`;
-
-        return res.status(200).json({ success: true, content });
     } catch (error) {
         console.error(error.message);
         return res.status(500).json({ success: false, message: error.message || 'Internal server error.' });
