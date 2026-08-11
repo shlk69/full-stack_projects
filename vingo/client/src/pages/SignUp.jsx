@@ -17,15 +17,14 @@ function SignUp() {
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(""); // Added error state
+  const [errorMsg, setErrorMsg] = useState(""); 
 
   const navigate = useNavigate();
 
   const signupHandler = async (e) => {
     e.preventDefault();
-    setErrorMsg(""); // Reset previous errors
+    setErrorMsg("");
 
-    // 1. Validation check for empty fields
     if (
       !fullName.trim() ||
       !email.trim() ||
@@ -195,7 +194,7 @@ function SignUp() {
         </div>
 
         <button
-          type="submit" // Triggers form onSubmit handling securely
+          type="submit" 
           disabled={loading}
           className={`w-full font-semibold py-2 rounded-lg transition duration-200 text-white cursor-pointer flex items-center justify-center gap-2 ${
             loading ? "opacity-70 cursor-not-allowed" : ""
