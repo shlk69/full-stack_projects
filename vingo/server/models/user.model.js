@@ -18,14 +18,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Password is required'],
         minlength: [6, 'Password must be at least 6 characters long'],
-        select:false
+        select: false
     },
     mobile: {
         type: String,
         required: [true, 'Mobile number is required'],
         trim: true,
-        unique: true, 
-        match: [/^\+?[1-9]\d{1,14}$/, 'Please provide a valid E.164 phone number'] 
+        unique: true,
+        match: [/^\+?[1-9]\d{1,14}$/, 'Please provide a valid E.164 phone number']
     },
 
     role: {
@@ -35,15 +35,10 @@ const userSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();
-    try {
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
-    } catch (error) {
-        next(error);
-    }
+userSchema.pre('save', async function () {
+    if (!this.isModified('password')) return;
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {

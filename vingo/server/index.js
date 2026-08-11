@@ -11,7 +11,7 @@ const port = process.env.PORT || 3000
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     credentials: true
 }))
 
@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
 })
 
 
-app.listen(() => {
+app.listen(port,() => {
     connectDb
     console.log('Server is running on port ',port)
 })
