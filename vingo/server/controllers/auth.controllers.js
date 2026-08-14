@@ -1,5 +1,6 @@
 import User from "../models/user.model.js"
 import { genToken } from "../utils/token.js"
+import { sendOtpMail } from "../utils/mail.js"
 
 export const signUp = async (req, res) => {
     try {
@@ -86,3 +87,28 @@ export const signOut = async (req,res) => {
         return res.status(500).json({message:'Internal server error'})
     }
 }
+
+
+export const sendOtp = async (req, res) => {
+    try {
+        const { email } = req.body
+        const user = await User.findOne({ email })
+        if (!user) {
+            return res.status(404).json({message:'User not found'})
+        }
+        const otp = Math.floor(1000 + Math.random() * 9000).toString()
+
+        user.resetOtp = otp
+        user.otpExpires = Date.now() + 5 * 60 * 1000
+        await user.save()
+        await sendOtpMail(email,otp)
+        res.status(200).json({message:'Verification code sent successfully!'})
+    } catch (error) {
+        console.log('Error while sending the otp ', error.message)
+        return res.status(500).json({
+            message:'Internal server error'
+        })
+    }
+}
+
+
