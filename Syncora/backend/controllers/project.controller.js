@@ -1,19 +1,36 @@
-const Project = require('../models/Project');
+const projectService = require('../services/project.service');
+const Activity = require('../models/Activity');
 
-exports.getProjects = async (req, res, next) => {
+exports.createProject = async (req, res, next) => {
     try {
-        const projects = await Project.find({ owner: req.user.userId }).sort({ createdAt: -1 });
-        res.json(projects);
+        const project = await projectService.createProject(req.user.userId, req.body);
+        res.status(201).json({
+            success: true,
+            message: 'Project created successfully',
+            data: { project }
+        });
     } catch (error) {
         next(error);
     }
 };
 
-exports.createProject = async (req, res, next) => {
+exports.getProjects = async (req, res, next) => {
     try {
-        const { name, description } = req.body;
-        const project = await Project.create({ name, description, owner: req.user.userId });
-        res.status(201).json(project);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+
+        const { projects, total } = await projectService.getProjectsForUser(req.user.userId, page, limit);
+
+        res.json({
+            success: true,
+            message: 'Projects retrieved',
+            data: {
+                items: projects,
+                pagination: {
+                    page, limit, total, totalPages: Math.ceil(total / limit)
+                }
+            }
+        });
     } catch (error) {
         next(error);
     }
@@ -21,9 +38,27 @@ exports.createProject = async (req, res, next) => {
 
 exports.getProject = async (req, res, next) => {
     try {
-        const project = await Project.findOne({ _id: req.params.id, owner: req.user.userId });
-        if (!project) return res.status(404).json({ message: 'Project not found' });
-        res.json(project);
+        // Request has already passed through `requireRole` in router (which guarantees membership)
+        const project = await projectService.getProjectDetails(req.params.id);
+        res.json({
+            success: true, message: 'Project retrieved', data: { project }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.updateProject = async (req, res, next) => {
+    try {
+        const project = await projectService.updateProject(req.params.id, req.body);
+
+        await Activity.create({
+            project: req.params.id, actor: req.user.userId, action: 'PROJECT_UPDATED', metadata: { updates: req.body }
+        });
+
+        res.json({
+            success: true, message: 'Project updated', data: { project }
+        });
     } catch (error) {
         next(error);
     }
@@ -31,10 +66,10 @@ exports.getProject = async (req, res, next) => {
 
 exports.deleteProject = async (req, res, next) => {
     try {
-        const project = await Project.findOneAndDelete({ _id: req.params.id, owner: req.user.userId });
-        if (!project) return res.status(404).json({ message: 'Project not found' });
-        // NOTE: Should also delete tasks related to project ideally
-        res.json({ message: 'Project deleted' });
+        await projectService.deleteProject(req.params.id);
+        res.json({
+            success: true, message: 'Project deleted successfully', data: {}
+        });
     } catch (error) {
         next(error);
     }

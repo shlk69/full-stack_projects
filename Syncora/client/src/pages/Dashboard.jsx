@@ -1,62 +1,71 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useContext } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Plus, FolderKanban, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const Dashboard = () => {
     const { api } = useContext(AuthContext);
-    const [projects, setProjects] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
 
-    // New Project Form
     const [showForm, setShowForm] = useState(false);
     const [newName, setNewName] = useState('');
     const [newDesc, setNewDesc] = useState('');
 
-    useEffect(() => {
-        fetchProjects();
-    }, []);
-
-    const fetchProjects = async () => {
-        try {
+    const { data, isLoading } = useQuery({
+        queryKey: ['projects'],
+        queryFn: async () => {
             const res = await api.get('/projects');
-            setProjects(res.data);
-        } catch (err) {
-            toast.error('Failed to load projects');
-        } finally {
-            setLoading(false);
+            return res.data.data.items;
         }
-    };
+    });
 
-    const handleCreate = async (e) => {
-        e.preventDefault();
-        try {
-            const res = await api.post('/projects', { name: newName, description: newDesc });
-            setProjects([res.data, ...projects]);
+    const createMutation = useMutation({
+        mutationFn: async (newProject) => {
+            const res = await api.post('/projects', newProject);
+            return res.data.data.project;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['projects']);
             setShowForm(false);
             setNewName('');
             setNewDesc('');
             toast.success('Project created!');
-        } catch (err) {
-            toast.error('G failed to create project');
+        },
+        onError: (err) => {
+            toast.error(err.response?.data?.message || 'Failed to create project');
         }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id) => {
+            await api.delete(`/projects/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['projects']);
+            toast.success('Project deleted');
+        },
+        onError: (err) => {
+            toast.error(err.response?.data?.message || 'Failed to delete project');
+        }
+    });
+
+    const handleCreate = (e) => {
+        e.preventDefault();
+        createMutation.mutate({ name: newName, description: newDesc });
     };
 
-    const handleDelete = async (id, e) => {
+    const handleDelete = (id, e) => {
         e.preventDefault();
         e.stopPropagation();
-        try {
-            await api.delete(`/projects/${id}`);
-            setProjects(projects.filter(p => p._id !== id));
-            toast.success('Project deleted');
-        } catch (err) {
-            toast.error('Failed to delete project');
-        }
+        deleteMutation.mutate(id);
     };
 
-    if (loading) return <div className="container mt-10 text-center">Loading your workspace...</div>;
+    if (isLoading) return <div className="container mt-10 text-center">Loading your workspace...</div>;
+
+    const projects = data || [];
 
     return (
         <div className="container animate-fade-in" style={{ marginTop: '20px' }}>
@@ -80,13 +89,15 @@ const Dashboard = () => {
                 >
                     <div>
                         <label className="text-sm font-medium mb-2 block">Project Name *</label>
-                        <input type="text" className="input-field" value={newName} onChange={e => setNewName(e.target.value)} required />
+                        <input type="text" className="input-field" value={newName} onChange={e => setNewName(e.target.value)} required disabled={createMutation.isPending} />
                     </div>
                     <div>
                         <label className="text-sm font-medium mb-2 block">Description</label>
-                        <input type="text" className="input-field" value={newDesc} onChange={e => setNewDesc(e.target.value)} />
+                        <input type="text" className="input-field" value={newDesc} onChange={e => setNewDesc(e.target.value)} disabled={createMutation.isPending} />
                     </div>
-                    <button type="submit" className="btn-primary">Create</button>
+                    <button type="submit" className="btn-primary" disabled={createMutation.isPending}>
+                        {createMutation.isPending ? 'Creating...' : 'Create'}
+                    </button>
                 </motion.form>
             )}
 
@@ -106,9 +117,9 @@ const Dashboard = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.1 }}
-                            key={project._id}
+                            key={project.id || project._id}
                         >
-                            <Link to={`/project/${project._id}`} className="glass-panel block p-6 h-full transition-all hover:bg-[var(--bg-tertiary)]" style={{ display: 'flex', flexDirection: 'column' }}>
+                            <RouterLink to={`/project/${project.id || project._id}`} className="glass-panel block p-6 h-full transition-all hover:bg-[var(--bg-tertiary)]" style={{ display: 'flex', flexDirection: 'column' }}>
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-3">
                                         <div style={{ padding: '10px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', color: 'var(--accent-primary)' }}>
@@ -116,15 +127,16 @@ const Dashboard = () => {
                                         </div>
                                         <h3 className="text-xl font-bold" style={{ wordBreak: 'break-word' }}>{project.name}</h3>
                                     </div>
-                                    <button onClick={(e) => handleDelete(project._id, e)} className="text-muted hover:text-danger" style={{ background: 'none' }}>
+                                    <button onClick={(e) => handleDelete(project.id || project._id, e)} className="text-muted hover:text-danger" style={{ background: 'none' }}>
                                         <Trash2 size={18} />
                                     </button>
                                 </div>
                                 <p className="text-muted text-sm flex-1">{project.description || 'No description provided.'}</p>
-                                <div className="text-xs text-muted mt-4">
-                                    Created {new Date(project.createdAt).toLocaleDateString()}
+                                <div className="text-xs text-muted mt-4 flex justify-between">
+                                    <span>Created {new Date(project.createdAt).toLocaleDateString()}</span>
+                                    <span>{project.membersCount || 1} Member(s)</span>
                                 </div>
-                            </Link>
+                            </RouterLink>
                         </motion.div>
                     ))
                 )}

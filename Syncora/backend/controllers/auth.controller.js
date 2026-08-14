@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const generateToken = (userId) => {
@@ -10,15 +9,20 @@ exports.register = async (req, res, next) => {
     try {
         const { name, email, password } = req.body;
         const exists = await User.findOne({ email });
-        if (exists) return res.status(400).json({ message: 'User already exists' });
+        if (exists) {
+            return res.status(409).json({ success: false, message: 'User already exists', code: 'CONFLICT' });
+        }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await User.create({ name, email, password: hashedPassword });
-
+        const user = await User.create({ name, email, password });
         const token = generateToken(user._id);
-        res.cookie('token', token, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
 
-        res.status(201).json({ user: { id: user._id, name: user.name, email: user.email }, token });
+        res.cookie('token', token, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000, secure: process.env.NODE_ENV === 'production' });
+
+        res.status(201).json({
+            success: true,
+            message: 'Registration successful',
+            data: { user }
+        });
     } catch (error) {
         next(error);
     }
@@ -28,15 +32,24 @@ exports.login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
-        if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Invalid credentials', code: 'UNAUTHORIZED' });
+        }
+
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: 'Invalid credentials', code: 'UNAUTHORIZED' });
+        }
 
         const token = generateToken(user._id);
-        res.cookie('token', token, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
+        res.cookie('token', token, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000, secure: process.env.NODE_ENV === 'production' });
 
-        res.json({ user: { id: user._id, name: user.name, email: user.email }, token });
+        res.json({
+            success: true,
+            message: 'Login successful',
+            data: { user }
+        });
     } catch (error) {
         next(error);
     }
@@ -44,13 +57,20 @@ exports.login = async (req, res, next) => {
 
 exports.logout = (req, res) => {
     res.cookie('token', '', { httpOnly: true, expires: new Date(0) });
-    res.json({ message: 'Logged out successfully' });
+    res.json({ success: true, message: 'Logged out successfully', data: {} });
 };
 
 exports.getMe = async (req, res, next) => {
     try {
-        const user = await User.findById(req.user.userId).select('-password');
-        res.json(user);
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found', code: 'NOT_FOUND' });
+        }
+        res.json({
+            success: true,
+            message: 'User retrieved successfully',
+            data: { user }
+        });
     } catch (error) {
         next(error);
     }

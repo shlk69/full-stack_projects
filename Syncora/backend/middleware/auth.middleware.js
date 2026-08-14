@@ -8,7 +8,7 @@ exports.protect = (req, res, next) => {
     }
 
     if (!token) {
-        return res.status(401).json({ message: 'Not authorized, no token provided' });
+        return res.status(401).json({ success: false, message: 'Not authorized, no token provided', code: 'UNAUTHORIZED' });
     }
 
     try {
@@ -16,6 +16,6 @@ exports.protect = (req, res, next) => {
         req.user = decoded; // { userId }
         next();
     } catch (error) {
-        res.status(401).json({ message: 'Not authorized, token failed' });
+        res.status(401).json({ success: false, message: 'Not authorized, token failed', code: 'UNAUTHORIZED' });
     }
 };

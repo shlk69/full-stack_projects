@@ -1,13 +1,8 @@
 import React, { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import api from '../api/axios';
 
 export const AuthContext = createContext();
-
-const api = axios.create({
-    baseURL: 'http://localhost:5000/api',
-    withCredentials: true,
-});
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -20,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     const checkUser = async () => {
         try {
             const res = await api.get('/auth/me');
-            setUser(res.data);
+            setUser(res.data.data.user);
         } catch (err) {
             setUser(null);
         } finally {
@@ -31,8 +26,8 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const res = await api.post('/auth/login', { email, password });
-            setUser(res.data.user);
-            toast.success('Logged in successfully!');
+            setUser(res.data.data.user);
+            toast.success(res.data.message || 'Logged in successfully!');
             return true;
         } catch (err) {
             toast.error(err.response?.data?.message || 'Login failed');
@@ -43,8 +38,8 @@ export const AuthProvider = ({ children }) => {
     const register = async (name, email, password) => {
         try {
             const res = await api.post('/auth/register', { name, email, password });
-            setUser(res.data.user);
-            toast.success('Registered successfully!');
+            setUser(res.data.data.user);
+            toast.success(res.data.message || 'Registered successfully!');
             return true;
         } catch (err) {
             toast.error(err.response?.data?.message || 'Registration failed');
@@ -54,9 +49,9 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            await api.post('/auth/logout');
+            const res = await api.post('/auth/logout');
             setUser(null);
-            toast.success('Logged out');
+            toast.success(res.data.message || 'Logged out');
         } catch (err) {
             console.error(err);
         }

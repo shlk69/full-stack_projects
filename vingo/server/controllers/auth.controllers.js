@@ -112,3 +112,45 @@ export const sendOtp = async (req, res) => {
 }
 
 
+export const verifyOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body
+        const user = await User.findOne({ email })
+
+        if (!user || user.resetOtp !== otp || user.otpExpires < Date.now()) {
+            return res.status(400).json({ message: "invalid/expired otp" })
+        }
+
+        user.isOtpVerified = true
+        user.resetOtp = undefined
+        user.otpExpires = undefined
+        await user.save()
+
+        return res.status(200).json({ message: "otp verified successfully" })
+    } catch (error) {
+        console.error("OTP Verification Error:", error)
+        return res.status(500).json({ message: "Internal server error" })
+    }
+}
+
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { email, newPassword } = req.body
+        const user = await User.findOne({ email })
+
+        if (!user || !user.isOtpVerified) {
+            return res.status(400).json({ message: "otp verification required" })
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10)
+        user.password = hashedPassword
+        user.isOtpVerified = false
+        await user.save()
+
+        return res.status(200).json({ message: "password reset successfully" })
+    } catch (error) {
+        console.error("Reset Password Error:", error)
+        return res.status(500).json({ message: "Internal server error" })
+    }
+}
