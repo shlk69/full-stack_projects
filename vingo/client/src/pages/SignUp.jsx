@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
+import { auth } from "../../firebase";
 import api from "../api";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 function SignUp() {
   const primaryColor = "#ff4d2d";
@@ -17,7 +19,20 @@ function SignUp() {
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(""); 
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleGoogleAuth = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      if (result.user) {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.log(error.message);
+      setErrorMsg('Internal server error');
+    }
+  };
 
   const navigate = useNavigate();
 
@@ -49,8 +64,8 @@ function SignUp() {
     } catch (error) {
       setErrorMsg(
         error.response?.data?.message ||
-          error.message ||
-          "Something went wrong!",
+        error.message ||
+        "Something went wrong!",
       );
     } finally {
       setLoading(false);
@@ -181,10 +196,10 @@ function SignUp() {
                 style={
                   role === r
                     ? {
-                        backgroundColor: primaryColor,
-                        color: "white",
-                        border: `1px solid ${primaryColor}`,
-                      }
+                      backgroundColor: primaryColor,
+                      color: "white",
+                      border: `1px solid ${primaryColor}`,
+                    }
                     : { border: `1px solid ${borderColor}`, color: "#555" }
                 }>
                 {r === "deliveryBoy" ? "Delivery Boy" : r}
@@ -194,11 +209,10 @@ function SignUp() {
         </div>
 
         <button
-          type="submit" 
+          type="submit"
           disabled={loading}
-          className={`w-full font-semibold py-2 rounded-lg transition duration-200 text-white cursor-pointer flex items-center justify-center gap-2 ${
-            loading ? "opacity-70 cursor-not-allowed" : ""
-          }`}
+          className={`w-full font-semibold py-2 rounded-lg transition duration-200 text-white cursor-pointer flex items-center justify-center gap-2 ${loading ? "opacity-70 cursor-not-allowed" : ""
+            }`}
           style={{ backgroundColor: primaryColor }}
           onMouseEnter={(e) =>
             (e.currentTarget.style.backgroundColor = hoverColor)
@@ -224,6 +238,7 @@ function SignUp() {
 
         <button
           type="button"
+          onClick={handleGoogleAuth}
           className="cursor-pointer w-full flex items-center justify-center gap-2 border rounded-lg px-4 py-2 transition duration-200 border-gray-400 hover:bg-gray-100">
           <FcGoogle size={20} />
           <span>Sign up with Google</span>

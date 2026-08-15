@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify"; // Imported toast
 import api from "../api";
 
 const ForgotPassword = () => {
@@ -19,52 +20,86 @@ const ForgotPassword = () => {
   };
 
   const handleSendOtp = async () => {
+    if (!email) {
+      toast.error("Please enter your email address.");
+      return;
+    }
+
+    setLoading(true);
     try {
       const result = await api.post(
         `/auth/send-otp`,
         { email },
         { withCredentials: true },
       );
-      console.log(result);
+      toast.success("Verification code sent successfully!");
       setStep(2);
     } catch (error) {
-      console.log(error);
+      const errorMsg =
+        error.response?.data?.message ||
+        "Failed to send OTP. Please try again.";
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
-const handleVerifyOtp = async () => {
-  try {
-    const result = await api.post(
-      `/auth/verify-otp`,
-      { email, otp },
-      { withCredentials: true },
-    );
-    console.log(result);
-    setStep(3);
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-  
-  const handleResetPassword = async () => {
-    if (password != confirmPassword) {
-      return null;
+  const handleVerifyOtp = async () => {
+    if (!otp) {
+      toast.error("Please enter the verification code.");
+      return;
     }
+
+    setLoading(true);
     try {
-      const result = await axios.post(
-        `/auth/reset-otp`,
-        { email, newPassword },
+      const result = await api.post(
+        `/auth/verify-otp`,
+        { email, otp },
         { withCredentials: true },
       );
-      console.log(result);
-      navigate("/signin");
+      toast.success("OTP verified successfully!");
+      setStep(3);
     } catch (error) {
-      console.log(error);
+      const errorMsg =
+        error.response?.data?.message || "Invalid or expired OTP.";
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!password || !confirmPassword) {
+      toast.error("Please fill in all password fields.");
+      return;
+    }
 
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await api.post(
+        `/auth/reset-otp`,
+        { email, password },
+        { withCredentials: true },
+      );
+      toast.success("Password reset successful! Redirecting to login...");
+
+      // Delay navigation slightly so user can read the success message
+      setTimeout(() => {
+        navigate("/signin");
+      }, 2000);
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.message || "Failed to reset password.";
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex w-full items-center justify-center min-h-screen p-4 bg-[#fff9f6]">
@@ -73,7 +108,7 @@ const handleVerifyOtp = async () => {
           <IoIosArrowRoundBack
             onClick={() => navigate("/signin")}
             size={30}
-            className="text-[#ff4d2d]"
+            className="text-[#ff4d2d] cursor-pointer"
           />
           <h1 className="text-2xl font-bold text-center text-gray-700">
             {step === 1 && "Forgot Password"}
@@ -100,16 +135,18 @@ const handleVerifyOtp = async () => {
             </label>
             <input
               required
+              disabled={loading}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
-              className="w-full border rounded-lg px-3 py-2 focus:border-orange-500 outline-none border-gray-200"
+              className="w-full border rounded-lg px-3 py-2 focus:border-orange-500 outline-none border-gray-200 disabled:bg-gray-100"
               placeholder="Enter your Email"
             />
             <button
               onClick={handleSendOtp}
-              className={`w-full font-semibold mt-4 py-2 rounded-lg transition duration-200 bg-[#ff4d2d] text-white hover:bg-[#e64323] cursor-pointer`}>
-              Send Verification Code
+              disabled={loading}
+              className={`w-full font-semibold mt-4 py-2 rounded-lg transition duration-200 bg-[#ff4d2d] text-white hover:bg-[#e64323] cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed`}>
+              {loading ? "Sending..." : "Send Verification Code"}
             </button>
           </div>
         )}
@@ -124,16 +161,18 @@ const handleVerifyOtp = async () => {
             </label>
             <input
               required
+              disabled={loading}
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               type="text"
-              className="w-full border rounded-lg px-3 py-2 focus:border-orange-500 outline-none border-gray-200"
+              className="w-full border rounded-lg px-3 py-2 focus:border-orange-500 outline-none border-gray-200 disabled:bg-gray-100"
               placeholder="Enter 6-digit code"
             />
             <button
               onClick={handleVerifyOtp}
-              className="w-full font-semibold mt-4 py-2 rounded-lg transition duration-200 bg-[#ff4d2d] text-white hover:bg-[#e64323] cursor-pointer">
-              Verify Code
+              disabled={loading}
+              className="w-full font-semibold mt-4 py-2 rounded-lg transition duration-200 bg-[#ff4d2d] text-white hover:bg-[#e64323] cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed">
+              {loading ? "Verifying..." : "Verify Code"}
             </button>
           </div>
         )}
@@ -149,10 +188,11 @@ const handleVerifyOtp = async () => {
               </label>
               <input
                 required
+                disabled={loading}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 type="password"
-                className="w-full border rounded-lg px-3 py-2 focus:border-orange-500 outline-none border-gray-200"
+                className="w-full border rounded-lg px-3 py-2 focus:border-orange-500 outline-none border-gray-200 disabled:bg-gray-100"
                 placeholder="Enter your new password"
               />
             </div>
@@ -164,17 +204,19 @@ const handleVerifyOtp = async () => {
               </label>
               <input
                 required
+                disabled={loading}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 type="password"
-                className="w-full border rounded-lg px-3 py-2 focus:border-orange-500 outline-none border-gray-200"
+                className="w-full border rounded-lg px-3 py-2 focus:border-orange-500 outline-none border-gray-200 disabled:bg-gray-100"
                 placeholder="Confirm your new password"
               />
             </div>
             <button
               onClick={handleResetPassword}
-              className="w-full font-semibold mt-4 py-2 rounded-lg transition duration-200 bg-[#ff4d2d] text-white hover:bg-[#e64323] cursor-pointer">
-              Update Password
+              disabled={loading}
+              className="w-full font-semibold mt-4 py-2 rounded-lg transition duration-200 bg-[#ff4d2d] text-white hover:bg-[#e64323] cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed">
+              {loading ? "Updating..." : "Update Password"}
             </button>
           </div>
         )}
