@@ -23,11 +23,24 @@ function SignUp() {
 
   const handleGoogleAuth = async () => {
     try {
+      if (!mobile) {
+        return setErrorMsg(
+          "You have to provide mobile number with google auth",
+        );
+      }
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      if (result.user) {
-        navigate("/dashboard");
-      }
+      const { data } = await api.post(
+        `/auth/google-auth`,
+        {
+          fullName: result.user.displayName,
+          email: result.user.email,
+          role,
+          mobile,
+        },
+        { withCredentials: true },
+      );
+      setErrorMsg('')
     } catch (error) {
       console.log(error.message);
       setErrorMsg('Internal server error');
@@ -163,7 +176,6 @@ function SignUp() {
           </label>
           <div className="relative">
             <input
-              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type={showPassword ? "text" : "password"}

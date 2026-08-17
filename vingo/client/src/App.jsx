@@ -4,8 +4,10 @@ import "react-toastify/dist/ReactToastify.css"; // Import Toast styles
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
+import useGetCurrentUser from "./hooks/useGetCurrentUser";
 
 function App() {
+  useGetCurrentUser()
   return (
     <>
       <Routes>

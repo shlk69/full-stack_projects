@@ -21,6 +21,8 @@ function SignIn() {
 
   const navigate = useNavigate();
 
+
+
   const signinHandler = async (e) => {
     e.preventDefault();
     setErrorMsg("");
@@ -34,7 +36,7 @@ function SignIn() {
     try {
       setLoading(true);
       const result = await api.post(
-        "/auth/signin", // Adjusted API endpoint
+        "/auth/signin", 
         { email, password },
         { withCredentials: true },
       );
@@ -56,12 +58,9 @@ function SignIn() {
   const handleGoogleAuth = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      if (result.user) {
-        navigate("/dashboard");
-      }
+      const result = await signInWithPopup(auth, provider); 
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
       setErrorMsg(error.message);
     }
   };

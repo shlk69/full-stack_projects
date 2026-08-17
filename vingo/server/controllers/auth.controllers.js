@@ -154,3 +154,29 @@ export const resetPassword = async (req, res) => {
         return res.status(500).json({ message: "Internal server error" })
     }
 }
+
+
+export const googleAuth = async (req, res) => {
+    try {
+        const { fullName, email, mobile,role } = req.body
+        let user = await User.findOne({ email })
+        if (!user) {
+            user = await User.create({
+                fullName, email, mobile, role
+            })
+        }
+
+        const token = await genToken(user._id)
+        res.cookie("token", token, {
+            secure: false,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpOnly: true
+        })
+
+        return res.status(200).json({message:'User created successfully',user})
+    } catch (error) {
+        console.log('Error while google auth ',error.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
