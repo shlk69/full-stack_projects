@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react'
 import api from '../api'
+import { useDispatch } from 'react-redux'
+import { setUserData } from '../redux/user.slice'
 
 const useGetCurrentUser = () => {
+   const dispatch = useDispatch()
+
     useEffect(() => {
         const fetchUser = async () => {
             try {
 
-                const response = await api.get('/user/current', {
+                const result = await api.get('/user/current', {
                     withCredentials: true
                 })
-                console.log(response)
+                dispatch(setUserData(result.data))
             } catch (err) {
-                console.error("Failed to fetch current user:", err)
+                console.error("Failed to fetch current user:", err.message)
             }
         }
 

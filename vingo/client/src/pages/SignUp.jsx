@@ -5,6 +5,8 @@ import { FcGoogle } from "react-icons/fc";
 import { auth } from "../../firebase";
 import api from "../api";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { useDispatch } from "react-redux";
+import { setUserData } from "../redux/user.slice";
 
 function SignUp() {
   const primaryColor = "#ff4d2d";
@@ -20,6 +22,7 @@ function SignUp() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const dispatch = useDispatch()
 
   const handleGoogleAuth = async () => {
     try {
@@ -40,6 +43,7 @@ function SignUp() {
         },
         { withCredentials: true },
       );
+      dispatch(setUserData(data));
       setErrorMsg('')
     } catch (error) {
       console.log(error.message);
@@ -65,11 +69,12 @@ function SignUp() {
 
     try {
       setLoading(true);
-      const result = await api.post(
+      const {data} = await api.post(
         "/auth/signup",
         { fullName, email, password, role, mobile },
         { withCredentials: true },
       );
+      dispatch(setUserData(data));
 
       if (result.status === 201 || result.status === 200) {
         navigate("/signin");

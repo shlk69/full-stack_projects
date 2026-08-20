@@ -5,6 +5,8 @@ import { FcGoogle } from "react-icons/fc";
 import api from "../api";
 import { auth } from "../../firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { useDispatch } from "react-redux";
+import { setUserData } from "../redux/user.slice";
 
 
 function SignIn() {
@@ -20,6 +22,7 @@ function SignIn() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const navigate = useNavigate();
+  const dispatch = useDispatch()
 
 
 
@@ -35,14 +38,15 @@ function SignIn() {
 
     try {
       setLoading(true);
-      const result = await api.post(
+      const {data} = await api.post(
         "/auth/signin", 
         { email, password },
         { withCredentials: true },
       );
+             dispatch(setUserData(data));
 
       if (result.status === 200 || result.status === 201) {
-        navigate("/dashboard"); // Redirect destination after login
+        navigate("/dashboard"); 
       }
     } catch (error) {
       setErrorMsg(
@@ -59,6 +63,8 @@ function SignIn() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider); 
+      dispatch(setUserData(result.data));
+
     } catch (error) {
       console.log(error.message);
       setErrorMsg(error.message);
