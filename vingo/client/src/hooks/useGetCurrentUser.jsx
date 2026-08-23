@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import api from '../api'
 import { useDispatch } from 'react-redux'
 import { setUserData } from '../redux/user.slice'

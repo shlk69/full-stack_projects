@@ -1,245 +1,148 @@
 import React, { useState } from "react";
-import {useNavigate} from 'react-router-dom'
-import { HiLocationMarker } from "react-icons/hi";
+import { FaLocationDot,FaPlus } from "react-icons/fa6";
+import { FiShoppingCart } from "react-icons/fi";
 import { IoIosSearch } from "react-icons/io";
-import { FiShoppingCart, FiLogOut, FiPackage } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
-import {toast} from 'react-toastify'
+import { RxCross2 } from "react-icons/rx";
+import {TbReceipt2} from 'react-icons/tb'
 import api from "../api";
 import { setUserData } from "../redux/user.slice";
+import { toast } from "react-toastify";
+
 
 function Nav() {
   const { userData, city } = useSelector((state) => state.user);
-  
-
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
+  const [showInfo, setShowInfo] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const dispatch = useDispatch();
 
   const handleLogout = async () => {
     try {
-      const result = api.get("/auth/signout", {
-          withCredentials:true
+      const result = await api.get("/auth/signout", {
+        withCredentials: true,
       });
-      dispatch(setUserData(null))
-      toast.success('Logged out successfully')
+      toast.success("Logged out successfully");
+      dispatch(setUserData(null));
     } catch (error) {
-      console.log('Error while logging out ', error.message)
-      toast.error('Unable to logout')
+      toast.error(error.message);
     }
   };
 
   return (
-    <nav className="fixed top-0 left-0 w-full h-[80px] z-[9999] bg-[#fff9f6] px-4 md:px-6">
-      <div className="w-full max-w-[1400px] h-full mx-auto flex items-center">
-        {/* ================= LEFT ================= */}
-        <div className="flex-1 flex items-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-[#ff4d2d]">
-            Vingo
-          </h1>
-        </div>
-
-        {/* ================= MOBILE ICONS ================= */}
-        <div className="flex md:hidden items-center gap-4 mr-4">
-          {/* Location */}
-          <button className="cursor-pointer" aria-label="Location">
-            <HiLocationMarker size={23} className="text-[#ff4d2d]" />
-          </button>
-
-          {/* Search */}
-          <button
-            onClick={() => setSearchOpen((prev) => !prev)}
-            className="cursor-pointer"
-            aria-label="Search">
+    <div className="w-full h-[80px] flex items-center justify-between md:justify-center gap-[30px] px-[20px] fixed top-0 z-[9999] bg-[#fff9f6] overflow-visible">
+      {showSearch && userData.role == "user" && (
+        <div className="fixed top-[80px] left-[5%] flex w-[90%] h-[70px] bg-white shadow-xl rounded-lg items-center gap-[20px] flex">
+          <div className="flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400">
+            <FaLocationDot size={25} className="text-[#ff4d2d]" />
+            <div className="w-[80%] truncate text-gray-600">{city}</div>
+          </div>
+          <div className="w-[80%] flex items-center gap-[10px]">
             <IoIosSearch size={25} className="text-[#ff4d2d]" />
-          </button>
-        </div>
-
-        {/* ================= DESKTOP SEARCH ================= */}
-        <div className="hidden md:flex w-[55%] lg:w-[45%] xl:w-[40%] h-[52px] bg-white rounded-xl shadow-lg items-center">
-          {/* Location */}
-          <div className="w-[32%] min-w-0 flex items-center gap-2 px-3 border-r border-gray-300">
-            <HiLocationMarker size={22} className="text-[#ff4d2d] shrink-0" />
-
-                      <span className="truncate text-gray-600 text-sm">{ city}</span>
-          </div>
-
-          {/* Search */}
-          <div className="flex-1 flex items-center gap-2 px-3 min-w-0">
-            <IoIosSearch size={24} className="text-[#ff4d2d] shrink-0" />
-
             <input
               type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search delicious food..."
-              className="w-full min-w-0 outline-none text-gray-700 text-sm placeholder:text-gray-400"
-            />
-          </div>
-        </div>
-
-        {/* ================= RIGHT ================= */}
-        <div className="flex-1 flex items-center justify-end gap-4 md:gap-6">
-          {/* Cart */}
-          <div className="relative cursor-pointer">
-            <FiShoppingCart size={24} className="text-[#ff4d2d]" />
-
-            <span className="absolute -right-2 -top-3 text-xs font-semibold text-[#ff4d2d]">
-              0
-            </span>
-          </div>
-
-          {/* Desktop My Orders */}
-          <button
-            className="
-              hidden md:flex
-              items-center gap-2
-              px-3 py-2
-              rounded-lg
-              bg-[#ff4d2d]/10
-              text-[#ff4d2d]
-              text-sm
-              font-medium
-              hover:bg-[#ff4d2d]/20
-              transition
-            ">
-            <FiPackage size={17} />
-            My Orders
-          </button>
-
-          {/* ================= PROFILE ================= */}
-          <div className="relative">
-            {/* Avatar */}
-            <button
-              onClick={() => setProfileOpen((prev) => !prev)}
-              className="
-                w-10 h-10
-                rounded-full
-                flex items-center justify-center
-                bg-[#ff4d2d]
-                text-white
-                text-lg
-                shadow-md
-                font-semibold
-                cursor-pointer
-              ">
-              {userData?.fullName?.slice(0, 1)?.toUpperCase() || "U"}
-            </button>
-
-            {/* ================= PROFILE DROPDOWN ================= */}
-            {profileOpen && (
-              <div
-                className="
-                  absolute
-                  right-0
-                  top-[52px]
-                  w-[220px]
-                  bg-white
-                  rounded-xl
-                  shadow-xl
-                  border border-gray-100
-                  overflow-hidden
-                  z-[10000]
-                ">
-                {/* User Information */}
-                <div className="px-4 py-4 border-b border-gray-100">
-                  <p className="font-semibold text-gray-800 truncate">
-                    {userData?.fullName || "User"}
-                  </p>
-
-                  {userData?.email && (
-                    <p className="text-xs text-gray-500 truncate mt-1">
-                      {userData.email}
-                    </p>
-                  )}
-                </div>
-
-                {/* My Orders */}
-                <button
-                  className="
-                    w-full
-                    flex items-center gap-3
-                    px-4 py-3
-                    text-gray-700
-                    hover:bg-[#fff4ef]
-                    hover:text-[#ff4d2d]
-                    transition
-                    text-left
-                  ">
-                  <FiPackage size={18} />
-                  <span>My Orders</span>
-                </button>
-
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="
-                    w-full
-                    flex items-center gap-3
-                    px-4 py-3
-                    text-gray-700
-                    hover:bg-red-50
-                    hover:text-red-500
-                    transition
-                    text-left
-                  ">
-                  <FiLogOut size={18} />
-                  <span>Logout</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ================= MOBILE SEARCH BOX ================= */}
-      {searchOpen  && (
-        <div
-          className="
-            md:hidden
-            absolute
-            top-[80px]
-            left-0
-            w-full
-            px-4
-            py-3
-            bg-[#fff9f6]
-            shadow-md
-          ">
-          <div
-            className="
-              w-full
-              h-[50px]
-              bg-white
-              rounded-xl
-              shadow-lg
-              flex
-              items-center
-              gap-2
-              px-3
-            ">
-            <IoIosSearch size={24} className="text-[#ff4d2d] shrink-0" />
-
-            <input
-              autoFocus
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search delicious food..."
-              className="
-                w-full
-                outline-none
-                text-gray-700
-                text-sm
-                placeholder:text-gray-400
-              "
+              placeholder="search delicious food..."
+              className="px-[10px] text-gray-700 outline-0 w-full"
             />
           </div>
         </div>
       )}
-    </nav>
+
+      <h1 className="text-3xl font-bold mb-2 text-[#ff4d2d]">Vingo</h1>
+      {userData.role == "user" && (
+        <div className="hiddden md:flex md:w-[60%] lg:w-[40%] h-[70px] bg-white shadow-xl rounded-lg items-center gap-[20px] flex">
+          <div className="flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400">
+            <FaLocationDot size={25} className="text-[#ff4d2d]" />
+            <div className="w-[80%] truncate text-gray-600">jhansi</div>
+          </div>
+          <div className="w-[80%] flex items-center gap-[10px]">
+            <IoIosSearch size={25} className="text-[#ff4d2d]" />
+            <input
+              type="text"
+              placeholder="search delicious food..."
+              className="px-[10px] text-gray-700 outline-0 w-full"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-4">
+        {userData.role == "user" &&
+          (showSearch ? (
+            <RxCross2
+              size={25}
+              className="text-[#ff4d2d] md:hidden"
+              onClick={() => setShowSearch(false)}
+            />
+          ) : (
+            <IoIosSearch
+              size={25}
+              className="text-[#ff4d2d] md:hidden"
+              onClick={() => setShowSearch(true)}
+            />
+          ))}
+
+        {userData.role == "owner" ? (
+          <>
+            <button className="hidden md:flex items-center gap-1 p-2 cursor-pointer rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d]">
+              <FaPlus size={20} />
+              <span>Add Food Item</span>
+            </button>
+            <button className="md:hidden flex items-center p-2 cursor-pointer rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d]">
+              <FaPlus size={20} />
+            </button>
+
+            <div className="hidden md:flex items-center gap-2 cursor-pointer relative px-3 py-1 rounded-lg bg-[#ff4d2d]/10 text-[#ff4d2d] font-medium">
+              <TbReceipt2 size={20} />
+              <span>My Orders</span>
+              <span className="absolute -right-2 -top-2 text-xs font-bold text-white bg-[#ff4d2d] rounded-full px-[6px] py-[1px]">
+                0
+              </span>
+            </div>
+            <div className="md:hidden flex items-center gap-2 cursor-pointer relative px-3 py-1 rounded-lg bg-[#ff4d2d]/10 text-[#ff4d2d] font-medium">
+              <TbReceipt2 size={20} />
+              <span className="absolute -right-2 -top-2 text-xs font-bold text-white bg-[#ff4d2d] rounded-full px-[6px] py-[1px]">
+                0
+              </span>
+            </div>
+
+            
+          </>
+        ) : (
+          <>
+            <div className="relative cursor-pointer">
+              <FiShoppingCart size={25} className="text-[#ff4d2d]" />
+              <span className="absolute right-[-9px] top-[-12px] text-[#ff4d2d]">
+                0
+              </span>
+            </div>
+
+            <button className="hidden md:block px-3 py-1 rounded-lg bg-[#ff4d2d]/10 text-[#ff4d2d] text-sm font-medium">
+              My Orders
+            </button>
+          </>
+        )}
+
+        <div
+          onClick={(prev) => setShowInfo(!prev)}
+          className="w-[40px] h-[40px] rounded-full flex items-center justify-center bg-[#ff4d2d] text-white text-[18px] shadow-xl font-semibold cursor-pointer">
+          {userData?.fullName.slice(0, 1)}
+        </div>
+
+        {showInfo && (
+          <div className="fixed top-[80px] right-[10px] md:right-[10%] lg:right-[25%] w-[180px] bg-white shadow-2xl rounded-xl p-[20px] flex flex-col gap-[10px] z-[9999]">
+            <div className="text-[17px] font-semibold">{userData.fullName}</div>
+            <div className="md:hidden text-[#ff4d2d] font-semibold cursor-pointer">
+              My Orders
+            </div>
+            <div
+              onClick={handleLogout}
+              className="text-[#ff4d2d] font-semibold cursor-pointer">
+              Log Out
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

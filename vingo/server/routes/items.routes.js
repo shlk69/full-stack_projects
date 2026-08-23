@@ -9,3 +9,6 @@ const itemRouter = express.Router()
 
 itemRouter.post("/add-item", auth, upload.single("image"), addItem)
 itemRouter.post("/edit-item/:itemId", auth, upload.single("image"), editItem)
+
+
+export default itemRouter

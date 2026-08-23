@@ -5,6 +5,8 @@ import authRouter from './routes/auth.routes.js'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import userRouter from './routes/user.routes.js'
+import shopRouter from './routes/shop.routes.js'
+import itemRouter from './routes/items.routes.js'
 
 const app = express()
 
@@ -18,6 +20,8 @@ app.use(cors({
 
 app.use('/api/auth', authRouter)
 app.use('/api/user',userRouter)
+app.use('/api/shop',shopRouter)
+app.use('/api/item',itemRouter)
 
 app.get('/', (req, res) => {
     res.send('Hey there app is live')
