@@ -33,53 +33,23 @@ export const addItem = async (req, res) => {
 
 export const editItem = async (req, res) => {
     try {
-        const itemId = req.params.itemId;
-        const { name, category, foodType, price } = req.body;
-
+        const itemId = req.params.itemId
+        const { name, category, foodType, price } = req.body
         let image;
         if (req.file) {
-            try {
-                const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
-                image = cloudinaryResponse?.url || cloudinaryResponse;
-            } catch (uploadError) {
-                if (req.file) fs.unlinkSync(req.file.path);
-                return res.status(502).json({
-                    message: "Failed to upload new image to cloud storage.",
-                });
-            }
+            image = await uploadOnCloudinary(req.file.path)
         }
-
-        const updateData = { name, category, foodType, price };
-        if (image) updateData.image = image;
-
-        const item = await Item.findByIdAndUpdate(
-            itemId,
-            updateData,
-            { new: true, runValidators: true }
-        );
-
+        const item = await Item.findByIdAndUpdate(itemId, {
+            name, category, foodType, price, image
+        }, { new: true })
         if (!item) {
-            if (req.file) fs.unlinkSync(req.file.path);
-            return res.status(404).json({
-                message: "Item not found"
-            });
+            return res.status(400).json({ message: "item not found" })
         }
-
-        return res.status(200).json({
-            message: "Item updated successfully",
-            item
-        });
-
+        return res.status(201).json(item)
     } catch (error) {
-        // Fallback file cleanup on exception
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
-
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error while updating item.",
-            error: error.message
-        });
+        console.log('Error while editing item ', error.message)
+        return res.status(500).json({message:'Internal server error'})
     }
-};
+}
+
+

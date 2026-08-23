@@ -195,7 +195,7 @@ function Nav() {
       </div>
 
       {/* ================= MOBILE SEARCH BOX ================= */}
-      {searchOpen && (
+      {searchOpen  && (
         <div
           className="
             md:hidden
