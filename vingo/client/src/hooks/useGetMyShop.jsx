@@ -1,5 +1,6 @@
 import { useEffect,useDispatch } from "react";
 import api from "../api";
+import { setMyShopData } from "../redux/ownerSlice";
 
 
 
@@ -9,10 +10,10 @@ function useGetMyshop() {
     useEffect(() => {
         const fetchShop = async () => {
             try {
-                const result = await api.get('/shop/get-my', {
+                const {data} = await api.get('/shop/get-my', {
                     withCredentials: true,
                 });
-                dispatch(setUserData(result.data));
+                dispatch(setMyShopData(data))
             } catch (error) {
                 console.log(error);
             }
