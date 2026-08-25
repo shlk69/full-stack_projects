@@ -11,6 +11,7 @@ export const auth = async (req, res, next) => {
         // 2. Verify token (thows error if expired or tampered)
         const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
 
+        
         if (!decodedToken || !decodedToken.userId) {
             return res.status(401).json({ message: 'Invalid token structure. Authorization denied.' })
         }

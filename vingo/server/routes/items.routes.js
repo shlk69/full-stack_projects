@@ -1,9 +1,8 @@
 import express from "express"
 
-import isAuth from "../middlewares/isAuth.js"
 import { addItem, editItem } from "../controllers/item.controllers.js"
-import { upload } from "../middlewares/multer.js"
-import { auth } from "../middleware/auth.js"
+import { upload } from "../middleware/multer.js"
+import {auth} from '../middleware/auth.js'
 
 const itemRouter = express.Router()
 
