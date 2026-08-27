@@ -8,6 +8,7 @@ import {TbReceipt2} from 'react-icons/tb'
 import api from "../api";
 import { setUserData } from "../redux/user.slice";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 
 function Nav() {
@@ -16,6 +17,7 @@ function Nav() {
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate()
 
   const handleLogout = async () => {
     try {
@@ -84,17 +86,22 @@ function Nav() {
 
         {userData.role == "owner" ? (
           <>
-            {myShopData && 
+            {myShopData && (
               <>
-              <button className="hidden md:flex items-center gap-1 p-2 cursor-pointer rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d]">
-                <FaPlus size={20} />
-                <span>Add Food Item</span>
-              </button>
-              <button className="md:hidden flex items-center p-2 cursor-pointer rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d]">
-                <FaPlus size={20} />
-              </button>
-            </>}
-            
+                <button
+                  onClick={() => navigate("/add-item")}
+                  className="hidden md:flex items-center gap-1 p-2 cursor-pointer rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d]">
+                  <FaPlus size={20} />
+                  <span>Add Food Item</span>
+                </button>
+                <button
+                  onClick={() => navigate("/add-item")}
+                  className="md:hidden flex items-center p-2 cursor-pointer rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d]">
+                  <FaPlus size={20} />
+                </button>
+              </>
+            )}
+
             <div className="hidden md:flex items-center gap-2 cursor-pointer relative px-3 py-1 rounded-lg bg-[#ff4d2d]/10 text-[#ff4d2d] font-medium">
               <TbReceipt2 size={20} />
               <span>My Orders</span>

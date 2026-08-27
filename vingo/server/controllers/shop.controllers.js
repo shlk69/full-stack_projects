@@ -19,7 +19,7 @@ export const createEditShop = async (req, res) => {
             }, { new: true })
         }
 
-        await shop.populate("owner")
+        await shop.populate("owner items")
         return res.status(201).json({message:'Shop created successfully',shop})
     } catch (error) {
         return res.status(500).json({ message: `Unable to create shop` })
@@ -33,7 +33,11 @@ export const createEditShop = async (req, res) => {
 
 export const getMyShop = async (req, res) => {
     try {
-        const shop = await Shop.findOne({ owner: req.userId }).populate("owner items")
+        const shop = await Shop.findOne({ owner: req.userId }).populate("owner").populate({
+            path: "items",
+            options: { sort: { updatedAt: -1 } }
+        })
+
         if (!shop) {
             return null
         }
@@ -43,3 +47,4 @@ export const getMyShop = async (req, res) => {
         return res.status(500).json({ message: 'Unable to fetch the shop' })
     }
 }
+
