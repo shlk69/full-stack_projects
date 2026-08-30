@@ -1,19 +1,19 @@
 import { useEffect } from "react";
 import api from "../api";
 import { useDispatch, useSelector } from "react-redux";
-import { setShopsInMyCity } from "../redux/user.slice";
+import { setItemsInMyCity, setShopsInMyCity } from "../redux/user.slice";
 
-const useGetShopByCity = () => {
-  const dispatch = useDispatch();
-  const { city } = useSelector((state) => state.user);
+const useGetItemByCity = () => {
+    const dispatch = useDispatch();
+    const {city} = useSelector(state=>state.user)
 
   useEffect(() => {
     const fetchShop = async () => {
       try {
-        const result = await api.get(`/shop/get-by-city/${city}`, {
+        const result = await api.get(`/item/get-by-city/${city}`, {
           withCredentials: true,
         });
-        dispatch(setShopsInMyCity(result.data));
+        dispatch(setItemsInMyCity(result.data));
       } catch (err) {
         console.error("Failed to fetch current user:", err.message);
       }
@@ -23,4 +23,4 @@ const useGetShopByCity = () => {
   }, [city]);
 };
 
-export default useGetShopByCity;
+export default useGetItemByCity;

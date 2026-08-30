@@ -3,11 +3,14 @@ import { categories } from "../categories";
 import Nav from "./Nav";
 import { useRef } from "react";
 import { useSelector } from "react-redux";
+import FoodCard from "./FoodCard";
 
 function UserDashboard() {
   const cateScrollRef = useRef();
   const shopScrollRef = useRef();
-  const { city, shopsInMyCity } = useSelector((state) => state.user);
+  const { city, shopsInMyCity, itemsInMyCity } = useSelector(
+    (state) => state.user,
+  );
 
   const [showLeftCateButton, setShowLeftCateButton] = useState(false);
   const [showRightCateButton, setShowRightCateButton] = useState(false);
@@ -99,7 +102,11 @@ function UserDashboard() {
             className="w-full flex overflow-x-auto gap-4 pb-2 "
             ref={cateScrollRef}>
             {categories.map((cate, index) => (
-              <CategoryCard name={cate.category} image={cate.image} key={index} />
+              <CategoryCard
+                name={cate.category}
+                image={cate.image}
+                key={index}
+              />
             ))}
           </div>
           {showRightCateButton && (
@@ -140,8 +147,17 @@ function UserDashboard() {
           )}
         </div>
       </div>
+      <div className="w-full max-w-6xl flex flex-col gap-5 items-start p-[10px]">
+        <h1 className="text-gray-800 text-2xl sm:text-3xl">
+          Suggested Food Items
+        </h1>
 
-      
+        <div className="w-full h-auto flex flex-wrap gap-[20px] justify-center">
+          {itemsInMyCity?.map((item, index) => (
+            <FoodCard key={index} data={item} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
