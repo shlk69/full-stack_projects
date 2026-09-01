@@ -1,36 +1,46 @@
-import React, { useState } from 'react'
-import { FaDrumstickBite, FaLeaf, FaMinus, FaPlus, FaRegStar, FaShoppingCart, FaStar } from 'react-icons/fa';
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  FaDrumstickBite,
+  FaLeaf,
+  FaMinus,
+  FaPlus,
+  FaRegStar,
+  FaShoppingCart,
+  FaStar,
+} from "react-icons/fa";
+import { addToCart } from "../redux/user.slice";
 
-const FoodCard = ({data}) => {
+const FoodCard = ({ data }) => {
+  const [quantity, setQuantity] = useState(0);
+  const dispatch = useDispatch();
+  const { cartItems } = useSelector((state) => state.user);
 
-    const [quantity, setQuantity] = useState(0)
-    
-    const renderStars = (rating) => {
-      //r=3
-      const stars = [];
-      for (let i = 1; i <= 5; i++) {
-        stars.push(
-          i <= rating ? (
-            <FaStar className="text-yellow-500 text-lg" />
-          ) : (
-            <FaRegStar className="text-yellow-500 text-lg" />
-          ),
-        );
-      }
-    };
+  const renderStars = (rating) => {
+    //r=3
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        i <= rating ? (
+          <FaStar className="text-yellow-500 text-lg" />
+        ) : (
+          <FaRegStar className="text-yellow-500 text-lg" />
+        ),
+      );
+    }
+  };
 
-    const handleIncrease = () => {
-      const newQty = quantity + 1;
+  const handleIncrease = () => {
+    const newQty = quantity + 1;
+    setQuantity(newQty);
+  };
+
+  const handleDecrease = () => {
+    if (quantity > 0) {
+      const newQty = quantity - 1;
       setQuantity(newQty);
-    };
-
-    const handleDecrease = () => {
-      if (quantity > 0) {
-        const newQty = quantity - 1;
-        setQuantity(newQty);
-      }
-    };
-
+    }
+  };
 
   return (
     <div className="w-[250px] rounded-2xl border-2 border-[#ff4d2d] bg-white shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col">
@@ -78,13 +88,27 @@ const FoodCard = ({data}) => {
             className="px-2 py-1 hover:bg-gray-100 transition">
             <FaPlus />
           </button>
-          <button className="bg-[#ff4d2d] text-white px-3 py-2 transition-colors">
+          <button
+            onClick={dispatch(
+              quantity > 0
+                ? addToCart({
+                    id: data._id,
+                    name: data.name,
+                    price: data.price,
+                    image: data.image,
+                    shop: data.shop,
+                    quantity,
+                    foodType: data.foodType,
+                  })
+                : null,
+            )}
+            className={`${cartItems.some((i) => i.id === data._id) ? "bg-gray-800" : "bg-[#ff4d2d]"} text-white px-3 py-2 transition-colors`}>
             <FaShoppingCart />
           </button>
         </div>
       </div>
     </div>
   );
-}
+};
 
-export default FoodCard
+export default FoodCard;
