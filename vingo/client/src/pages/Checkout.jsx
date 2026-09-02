@@ -12,6 +12,8 @@ import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { setAddress, setLocation } from "../redux/mapSlice";
 import axios from "axios";
+import api from "../api";
+import { useNavigate } from "react-router-dom";
 
 function RecenterMap({ location }) {
   if (location.lat && location.lon) {
@@ -30,6 +32,8 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const deliveryFee = totalAmount > 500 ? 0 : 40;
   const AmountWithDeliveryFee = totalAmount + deliveryFee;
+  const navigate = useNavigate()
+
   const onDragEnd = (e) => {
     const { lat, lng } = e.target._latlng;
     dispatch(setLocation({ lat, long: lng }));
@@ -64,6 +68,31 @@ const Checkout = () => {
       dispatch(setLocation({ lat, long: lon }));
     } catch (error) {}
   };
+
+
+  const handlePlaceOrder = async () => {
+    try {
+      const {data} = await api.post(
+        `/order/place-order`,
+        {
+          paymentMethod,
+          deliveryAddress: {
+            text: addressInput,
+            latitude: location.lat,
+            longitude: location.long,
+          },
+          totalAmount,
+          cartItems,
+        },
+        { withCredentials: true },
+      );
+      console.log(data);
+      navigate('/order-placed')
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
 
   useEffect(() => {
     setAddressInput(address);
@@ -198,7 +227,9 @@ const Checkout = () => {
             </div>
           </div>
         </section>
-        <button className="w-full bg-[#ff4d2d] hover:bg-[#e64526] text-white py-3 rounded-xl font-semibold">
+        <button
+          onClick={handlePlaceOrder}
+          className="w-full bg-[#ff4d2d] hover:bg-[#e64526] text-white py-3 rounded-xl font-semibold">
           {paymentMethod === "cod" ? "Place Order" : "Pay & Place Order"}
         </button>
       </div>
