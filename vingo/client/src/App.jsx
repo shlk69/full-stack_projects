@@ -18,13 +18,15 @@ import CartPage from "./pages/CartPage";
 import Checkout from "./pages/Checkout";
 import OrderPlaced from "./pages/OrderPlaced";
 import MyOrders from "./pages/MyOrders";
+import useGetMyOrders from "./hooks/useGetMyOrders";
 
 function App() {
   useGetCurrentUser()
   useGetCity()
   useGetMyshop()
   useGetItemByCity()
-    useGetShopByCity()
+  useGetShopByCity()
+  useGetMyOrders()
   const { userData } = useSelector(state => state.user)
   return (
     <>

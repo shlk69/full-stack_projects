@@ -104,13 +104,13 @@ function Nav() {
 
             <div className="hidden md:flex items-center gap-2 cursor-pointer relative px-3 py-1 rounded-lg bg-[#ff4d2d]/10 text-[#ff4d2d] font-medium">
               <TbReceipt2 size={20} />
-              <span>My Orders</span>
+              <span onClick={()=>navigate('my-orders')} >My Orders</span>
               <span className="absolute -right-2 -top-2 text-xs font-bold text-white bg-[#ff4d2d] rounded-full px-[6px] py-[1px]">
                 0
               </span>
             </div>
             <div className="md:hidden flex items-center gap-2 cursor-pointer relative px-3 py-1 rounded-lg bg-[#ff4d2d]/10 text-[#ff4d2d] font-medium">
-              <TbReceipt2 size={20} />
+               <TbReceipt2 onClick={()=>navigate('/my-orders')} size={20} />
               <span className="absolute -right-2 -top-2 text-xs font-bold text-white bg-[#ff4d2d] rounded-full px-[6px] py-[1px]">
                 0
               </span>
@@ -125,7 +125,7 @@ function Nav() {
               </span>
             </div>
 
-            <button className="hidden md:block px-3 py-1 rounded-lg bg-[#ff4d2d]/10 text-[#ff4d2d] text-sm font-medium">
+            <button onClick={()=>navigate('/my-orders')} className="hidden md:block px-3 py-1 rounded-lg bg-[#ff4d2d]/10 text-[#ff4d2d] text-sm font-medium">
               My Orders
             </button>
           </>
@@ -140,7 +140,7 @@ function Nav() {
         {showInfo && (
           <div className="fixed top-[80px] right-[10px] md:right-[10%] lg:right-[25%] w-[180px] bg-white shadow-2xl rounded-xl p-[20px] flex flex-col gap-[10px] z-[9999]">
             <div className="text-[17px] font-semibold">{userData.fullName}</div>
-            <div className="md:hidden text-[#ff4d2d] font-semibold cursor-pointer">
+            <div onClick={()=>navigate('/my-orders')} className="md:hidden text-[#ff4d2d] font-semibold cursor-pointer">
               My Orders
             </div>
             <div

@@ -1,5 +1,6 @@
 import { Order } from "../models/order.model.js"
 import { Shop } from "../models/shop.model.js"
+import User from "../models/user.model.js"
 
 export const placeOrder = async (req, res) => {
     try {
@@ -33,7 +34,7 @@ export const placeOrder = async (req, res) => {
                 owner: shop.owner_id,
                 subtotal,
                 shopOrderItems: items.map((i) => ({
-                    item: i._id,
+                    item: i.id,
                     price: i.price,
                     quantity: i.quantity,
                     name: i.name
@@ -50,11 +51,48 @@ export const placeOrder = async (req, res) => {
             shopOrders
         })
 
-        return res.status(201).json({message:'Order successfully created',newOrder})
+        return res.status(201).json({ message: 'Order successfully created', newOrder })
 
 
     } catch (error) {
-        console.log('Error while creating order ',error.message)
-        return res.status(500).json({message:'Internal server error'})
+        console.log('Error while creating order ', error.message)
+        return res.status(500).json({ message: 'Internal server error' })
     }
 }
+
+
+export const getMyOrders = async (req, res) => {
+    try {
+        const user = await User.find(req.userId)
+        if (user.role === 'user') {
+            const orders = await Order.find({ user: req.userId }).sort({ createdAt: -1 })
+                .populate("shopOrders.shop", "name")
+                .populate("shopOrders.o wner", "name email mobile")
+                .populate("shopOrders.shopOrderItems.item", "name image price")
+
+            return res.status(200).json(orders)
+        } else if (user.role === 'owner') {
+            const orders = await Order.find({ "shopOrders.owner": req.userId })
+                .sort({ createdAt: -1 })
+                .populate("shopOrders.shop", "name")
+                .populate("user")
+                .populate("shopOrders.shopOrderItems.item", "name image price")
+
+            const filteredOrders = orders.map((order) => ({
+                _id: order._id,
+                paymentMethod: order.paymentMethod,
+                user: order.user,
+                shopOrders: order.shopOrders.find(o => o.owner._id == req.userId),
+                createdAt: order.createdAt,
+                deliveryAddress:order.deliveryAddress
+            }))
+
+            return res.status(200).json(filteredOrders)
+
+        }
+    } catch (error) {
+        console.log('Error while getting user order ', error.message)
+        return res.status(500).json({ message: `Internal server error` })
+    }
+}
+
