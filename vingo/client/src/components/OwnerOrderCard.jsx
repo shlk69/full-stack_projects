@@ -1,6 +1,19 @@
 import React from "react";
 import { MdPhone } from "react-icons/md";
+import api from "../api";
+import { useDispatch } from "react-redux";
+import { updateOrderStatus } from "../redux/user.slice";
 function OwnerOrderCard({ data }) {
+  const dispatch = useDispatch()
+const handleUpdateStatus=async (orderId,shopId,status) => {
+    try {
+        const result=await api.post(`/order/update-status/${orderId}/${shopId}`,{status},{withCredentials:true})
+      console.log(result.data)
+      dispatch(updateOrderStatus(orderId,shopId,status))
+    } catch (error) {
+        console.log(error)
+    }
+}
   return (
     <div className="bg-white rounded-lg shadow p-4 space-y-4">
       <div>
@@ -49,8 +62,9 @@ function OwnerOrderCard({ data }) {
         </span>
 
         <select
-          value={data.shopOrders.status}
+          onChange={(e) => handleUpdateStatus(data._id,data.shopOrders.shop._id,e.target.value)}
           className="rounded-md border px-3 py-1 text-sm focus:outline-none focus:ring-2 border-[#ff4d2d] text-[#ff4d2d]">
+          <option value="pending">Change order status</option>
           <option value="pending">Pending</option>
           <option value="preparing">Preparing</option>
           <option value="out of delivery">Out Of Delivery</option>
@@ -60,7 +74,6 @@ function OwnerOrderCard({ data }) {
       <div className="text-right font-bold text-gray-800 text-sm">
         Total: ₹{data.shopOrders.subtotal}
       </div>
-      
     </div>
   );
 }

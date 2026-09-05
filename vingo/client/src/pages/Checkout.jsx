@@ -14,6 +14,7 @@ import { setAddress, setLocation } from "../redux/mapSlice";
 import axios from "axios";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
+import { addMyOrder } from "../redux/user.slice";
 
 function RecenterMap({ location }) {
   if (location.lat && location.lon) {
@@ -87,6 +88,7 @@ const Checkout = () => {
         { withCredentials: true },
       );
       console.log(data);
+      dispatch(addMyOrder(data))
       navigate('/order-placed')
     } catch (error) {
       console.log(error);
