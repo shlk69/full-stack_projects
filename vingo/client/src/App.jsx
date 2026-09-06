@@ -19,9 +19,11 @@ import Checkout from "./pages/Checkout";
 import OrderPlaced from "./pages/OrderPlaced";
 import MyOrders from "./pages/MyOrders";
 import useGetMyOrders from "./hooks/useGetMyOrders";
+import useUpdateLocation from "./hooks/useUpdateLocation";
 
 function App() {
   useGetCurrentUser()
+  useUpdateLocation()
   useGetCity()
   useGetMyshop()
   useGetItemByCity()
