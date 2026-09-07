@@ -3,13 +3,16 @@ import { MdPhone } from "react-icons/md";
 import api from "../api";
 import { useDispatch } from "react-redux";
 import { updateOrderStatus } from "../redux/user.slice";
+import { useState } from "react";
 function OwnerOrderCard({ data }) {
+  const [availableBoys, setAvailableBoys] = useState([])
   const dispatch = useDispatch()
 const handleUpdateStatus=async (orderId,shopId,status) => {
     try {
         const result=await api.post(`/order/update-status/${orderId}/${shopId}`,{status},{withCredentials:true})
       console.log(result.data)
-      dispatch(updateOrderStatus(orderId,shopId,status))
+      dispatch(updateOrderStatus(orderId, shopId, status))
+      setAvailableBoys(result.data.availableBoys)
     } catch (error) {
         console.log(error)
     }
@@ -62,7 +65,13 @@ const handleUpdateStatus=async (orderId,shopId,status) => {
         </span>
 
         <select
-          onChange={(e) => handleUpdateStatus(data._id,data.shopOrders.shop._id,e.target.value)}
+          onChange={(e) =>
+            handleUpdateStatus(
+              data._id,
+              data.shopOrders.shop._id,
+              e.target.value,
+            )
+          }
           className="rounded-md border px-3 py-1 text-sm focus:outline-none focus:ring-2 border-[#ff4d2d] text-[#ff4d2d]">
           <option value="pending">Change order status</option>
           <option value="pending">Pending</option>
@@ -70,6 +79,30 @@ const handleUpdateStatus=async (orderId,shopId,status) => {
           <option value="out of delivery">Out Of Delivery</option>
         </select>
       </div>
+
+      {data.shopOrders.status == "out of delivery" && (
+        <div className="mt-3 p-2 border rounded-lg text-sm bg-orange-50 gap-4">
+          {data.shopOrders.assignedDeliveryBoy ? (
+            <p>Assigned Delivery Boy:</p>
+          ) : (
+            <p>Available Delivery Boys:</p>
+          )}
+          {availableBoys?.length > 0 ? (
+            availableBoys.map((b, index) => (
+              <div className="text-gray-800">
+                {b.fullName}-{b.mobile}
+              </div>
+            ))
+          ) : data.shopOrders.assignedDeliveryBoy ? (
+            <div>
+              {data.shopOrders.assignedDeliveryBoy.fullName} -{" "}
+              {data.shopOrders.assignedDeliveryBoy.mobile}
+            </div>
+          ) : (
+            <div>Waiting for delivery boy to accept</div>
+          )}
+        </div>
+      )}
 
       <div className="text-right font-bold text-gray-800 text-sm">
         Total: ₹{data.shopOrders.subtotal}
