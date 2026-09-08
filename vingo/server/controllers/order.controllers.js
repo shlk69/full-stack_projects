@@ -138,7 +138,7 @@ export const updateOrderStatus = async (req, res) => {
 
             const availableBoys = nearByDeliveryBoys.filter(b => !busyIdSet.has(String(b._id)))
             const candidates = availableBoys.map(b => b._id)
-            
+
             if (candidates.length == 0) {
                 await order.save()
                 return res.json({
@@ -163,7 +163,7 @@ export const updateOrderStatus = async (req, res) => {
                 latitude: b.location.coordinates?.[1],
                 mobile: b.mobile
 
-             }))
+            }))
 
         }
 
@@ -203,7 +203,7 @@ export const getDeliveryBoyAssignment = async (req, res) => {
             .populate("shop")
 
         const formated = assignments.map(a => ({
-            assignmentId:a._id,
+            assignmentId: a._id,
             orderId: a.order._id,
             shopName: a.shop.name,
             deliveryAddress: a.order.deliveryAddress,
@@ -213,7 +213,7 @@ export const getDeliveryBoyAssignment = async (req, res) => {
         return res.status(200).json(formated)
     } catch (error) {
         console.log('error while getting the assignments')
-        return res.status(500).json({message:'Internal server error'})
+        return res.status(500).json({ message: 'Internal server error' })
     }
 }
 
@@ -236,7 +236,7 @@ export const acceptOrder = async (req, res) => {
         })
 
         if (alreadyAssigned) {
-           
+
             return res.status(400).json({ message: "You are already assigned to another order" })
         }
 
@@ -254,9 +254,71 @@ export const acceptOrder = async (req, res) => {
 
         shopOrder.assignedDeliveryBoy = req.userId
         await order.save()
-        return res.status(200).json({message:'Order accepted successfully'})
+        return res.status(200).json({ message: 'Order accepted successfully' })
     } catch (error) {
         console.log('error while acceting order ', error.message)
-        return res.status(500).json({message:'Internal server error'})
+        return res.status(500).json({ message: 'Internal server error' })
     }
 }
+
+
+export const getCurrentOrder = async (req, res) => {
+    try {
+        const assignment = await DeliveryAssignment.findOne({
+            assignedTo: req.userId,
+            status: "assigned"
+        })
+            .populate("shop", "name")
+            .populate("assignedTo", "fullName email mobile location")
+            .populate({
+                path: "order",
+                populate: [{
+                    path: 'user',
+                    select: "fullName email location mobile"
+                }],
+            });
+
+        if (!assignment || !assignment.order) {
+            return res.status(404).json({ message: "Assignment not found" });
+        }
+
+
+        const shopOrder = assignment.order.shopOrders.find(so => String(so._id) === String(assignment.shopOrderId));
+
+        if (!shopOrder) {
+            return res.status(400).json({ message: "shopOrder not found" });
+        }
+
+        let deliveryBoyLocation = { lat: null, lon: null };
+
+        if (assignment.assignedTo && assignment.assignedTo.location && assignment.assignedTo.location.coordinates && assignment.assignedTo.location.coordinates.length === 2) {
+            deliveryBoyLocation.lat = assignment.assignedTo.location.coordinates[1];
+            deliveryBoyLocation.lon = assignment.assignedTo.location.coordinates[0];
+        }
+
+        let customerLocation = { lat: null, lon: null };
+
+        if (assignment.order && assignment.order.deliveryAddress) {
+            customerLocation.lat = assignment.order.deliveryAddress.latitude;
+            customerLocation.lon = assignment.order.deliveryAddress.longitude;
+        }
+
+
+
+        return res.status(200).json({
+            _id: assignment.order._id,
+            user: assignment.order.user,
+            shopOrder,
+            deliveryAddress: assignment.order.deliveryAddress,
+            deliveryBoyLocation,
+            customerLocation
+        })
+        
+    } catch (error) {
+        // Log the error for internal debugging
+        console.error("Error in getCurrentOrder:", error);
+
+        // Return a standard internal server error response
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
