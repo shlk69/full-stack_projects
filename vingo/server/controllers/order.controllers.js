@@ -322,3 +322,36 @@ export const getCurrentOrder = async (req, res) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 };
+
+
+
+export const getOrderById = async (req, res) => {
+    try {
+        const { orderId } = req.params
+        const order = await Order.findById(orderId)
+            .populate("user")
+            .populate({
+                path: "shopOrders.shop",
+                model: "Shop"
+            })
+            .populate({
+                path: "shopOrders.assignedDeliveryBoy",
+                model: "User"
+            })
+            .populate({
+                path: "shopOrders.shopOrderItems.item",
+                model: "Item"
+            })
+            .lean()
+        
+        
+        if (!order) {
+            return res.status(404).json({message:'Order not found'})
+        }
+        return res.status(200).json(order)
+
+    } catch (error) {
+        console.log('Error while getting the order by id ', error.message)
+        return res.status(500).json({message:'Internal server error'})
+    }
+}
