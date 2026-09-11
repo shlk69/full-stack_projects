@@ -1,15 +1,15 @@
-import React, { useState } from 'react'
-import Nav from './Nav';
-import { useSelector } from 'react-redux';
-import api from '../api';
-import DeliveryBoyTracking from './DeliveryBoyTracking';
+import React, { useState } from "react";
+import Nav from "./Nav";
+import { useSelector } from "react-redux";
+import api from "../api";
+import DeliveryBoyTracking from "./DeliveryBoyTracking";
 
 const DeliveryBoy = () => {
-  const { userData } = useSelector(state => state.user)
-  const [availableAssignments,setAvailableAssignments] = useState(null)
-  const [currentOrder, setCurrentOrder] = useState(null)
-  const [showOtpbox, setShowOtpBox] = useState(false)
-  
+  const { userData } = useSelector((state) => state.user);
+  const [availableAssignments, setAvailableAssignments] = useState(null);
+  const [currentOrder, setCurrentOrder] = useState(null);
+  const [showOtpbox, setShowOtpBox] = useState(false);
+  const [otp, setOtp] = useState();
 
   const getAssignments = async () => {
     try {
@@ -17,7 +17,7 @@ const DeliveryBoy = () => {
         withCredentials: true,
       });
       console.log(result.data);
-      setAvailableAssignments(result.data)
+      setAvailableAssignments(result.data);
     } catch (error) {
       console.log(error);
     }
@@ -25,11 +25,43 @@ const DeliveryBoy = () => {
 
   const acceptOrder = async (assignmentId) => {
     try {
-      const result = await api.get(
-        `/order/accept-order/${assignmentId}`,
+      const result = await api.get(`/order/accept-order/${assignmentId}`, {
+        withCredentials: true,
+      });
+      await getCurrentOrder();
+      console.log(result.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const sendOtp = async () => {
+    try {
+      const result = await api.post(
+        `/order/send-delivery-otp/`,
+        {
+          orderId: currentOrder._id,
+          shopOrderId: currentOrder.shopOrder._id,
+        },
         { withCredentials: true },
       );
-       await getCurrentOrder()
+      console.log(result.data);
+      setShowOtpBox(true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const verifyOtp = async (otp) => {
+    try {
+      const result = await api.post(
+        `/order/verify-delivery-otp/`,
+        {
+          orderId: currentOrder._id,
+          shopOrderId: currentOrder.shopOrder._id,
+          otp,
+        },
+        { withCredentials: true },
+      );
       console.log(result.data);
     } catch (error) {
       console.log(error);
@@ -38,27 +70,19 @@ const DeliveryBoy = () => {
 
   const getCurrentOrder = async (assignmentId) => {
     try {
-      const result = await api.get(
-        `/order/get-current-order`,
-        { withCredentials: true },
-      );
+      const result = await api.get(`/order/get-current-order`, {
+        withCredentials: true,
+      });
       console.log(result.data);
-      setCurrentOrder(result.data)
+      setCurrentOrder(result.data);
     } catch (error) {
       console.log(error);
     }
   };
 
-
-  const handleSendOtp = (e) => {
-    setShowOtpBox(true)
-  }
-
-
-
   useEffect(() => {
     getAssignments();
-    getCurrentOrder()
+    getCurrentOrder();
   }, [userData]);
 
   return (
@@ -132,7 +156,7 @@ const DeliveryBoy = () => {
             <DeliveryBoyTracking data={currentOrder} />
             {!showOtpbox ? (
               <button
-                onClick={handleSendOtp}
+                onClick={sendOtp}
                 className="mt-4 w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-xl shadow-md hover:bg-green-600 active:scale-95 transition-all duration-200">
                 Mark As Delivered
               </button>
@@ -145,11 +169,15 @@ const DeliveryBoy = () => {
                   </span>
                 </p>
                 <input
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
                   type="text"
                   className="w-full border px-3 py-2 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                   placeholder="Enter OTP"
                 />
-                <button className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold hover:bg-orange-600 transition-all">
+                <button
+                  onClick={verifyOtp}
+                  className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold hover:bg-orange-600 transition-all">
                   Submit OTP
                 </button>
               </div>
@@ -159,6 +187,6 @@ const DeliveryBoy = () => {
       </div>
     </div>
   );
-}
+};
 
-export default DeliveryBoy
+export default DeliveryBoy;
