@@ -356,6 +356,7 @@ export const getOrderById = async (req, res) => {
         return res.status(500).json({message:'Internal server error'})
     }
 }
+<<<<<<< HEAD
 
 
 
@@ -408,3 +409,5 @@ export const verifyDeliveryOtp = async (req, res) => {
         return res.status(500).json({message:'Internal server error'})
     }
 }
+=======
+>>>>>>> 03eebffdf828a65a854804b40583ef00e9d0e2ae

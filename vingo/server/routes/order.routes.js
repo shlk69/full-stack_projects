@@ -1,6 +1,10 @@
 import express from 'express'
 import { auth } from '../middleware/auth.js'
+<<<<<<< HEAD
 import { acceptOrder, getCurrentOrder, getDeliveryBoyAssignment, getMyOrders, getOrderById, placeOrder,sendDeliveryOtp,updateOrderStatus, verifyDeliveryOtp } from '../controllers/order.controllers.js'
+=======
+import { acceptOrder, getCurrentOrder, getDeliveryBoyAssignment, getMyOrders, getOrderById, placeOrder,updateOrderStatus } from '../controllers/order.controllers.js'
+>>>>>>> 03eebffdf828a65a854804b40583ef00e9d0e2ae
 const orderRouter = express.Router()
 
 orderRouter.post("/place-order", auth, placeOrder)
