@@ -5,10 +5,12 @@ import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import FoodCard from "./FoodCard";
 import CategoryCard from "./CategoryCard";
+import { useNavigate } from "react-router-dom";
 
 function UserDashboard() {
   const cateScrollRef = useRef();
   const shopScrollRef = useRef();
+  const navigate = useNavigate()
   const { city, shopsInMyCity, itemsInMyCity } = useSelector(
     (state) => state.user,
   );
@@ -121,7 +123,7 @@ function UserDashboard() {
             ref={cateScrollRef}>
             {categories.map((cate, index) => (
               <CategoryCard
-                onClick={()=>handleCategory(cate.category)}
+                onClick={() => handleCategory(cate.category)}
                 name={cate.category}
                 image={cate.image}
                 key={index}
@@ -153,8 +155,13 @@ function UserDashboard() {
           <div
             className="w-full flex overflow-x-auto gap-4 pb-2 "
             ref={shopScrollRef}>
-            {shopsInMyCity?.map((cate, index) => (
-              <CategoryCard name={shop.name} image={shop.image} key={index} />
+            {shopsInMyCity?.map((shop, index) => (
+              <CategoryCard
+                onClick={() => navigate(`/shop/${shop._id}`)}
+                name={shop.name}
+                image={shop.image}
+                key={index}
+              />
             ))}
           </div>
           {showRightShopButton && (
