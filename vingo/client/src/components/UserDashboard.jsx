@@ -1,9 +1,10 @@
 import { FaCircleChevronLeft, FaCircleChevronRight } from "react-icons/fa6";
 import { categories } from "../categories";
 import Nav from "./Nav";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import FoodCard from "./FoodCard";
+import CategoryCard from "./CategoryCard";
 
 function UserDashboard() {
   const cateScrollRef = useRef();
@@ -17,6 +18,23 @@ function UserDashboard() {
 
   const [showLeftShopButton, setShowLeftShopButton] = useState(false);
   const [showRightShopButton, setShowRightShopButton] = useState(false);
+  const [updatedItemsList, setUpdatedItemsList] = useState([])
+  
+
+  const handleCategory = (category) => {
+    if (category === 'All') {
+     setUpdatedItemsList(itemsInMyCity);
+    } else {
+      const filteredItems = itemsInMyCity?.filter(i => i.category === category)
+      setUpdatedItemsList(filteredItems)
+   }
+  }
+  
+  useEffect(() => {
+    setUpdatedItemsList(itemsInMyCity)
+  },[itemsInMyCity])
+
+
 
   const updateButton = (ref, setLeftButton, setRightButton) => {
     const element = ref.current;
@@ -103,6 +121,7 @@ function UserDashboard() {
             ref={cateScrollRef}>
             {categories.map((cate, index) => (
               <CategoryCard
+                onClick={()=>handleCategory(cate.category)}
                 name={cate.category}
                 image={cate.image}
                 key={index}
@@ -153,7 +172,7 @@ function UserDashboard() {
         </h1>
 
         <div className="w-full h-auto flex flex-wrap gap-[20px] justify-center">
-          {itemsInMyCity?.map((item, index) => (
+          {updatedItemsList?.map((item, index) => (
             <FoodCard key={index} data={item} />
           ))}
         </div>
