@@ -5,8 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import FoodCard from "./FoodCard";
 import CategoryCard from "./CategoryCard";
-import { useNavigate } from "react-router-dom";
-import api from "../api";
 
 function UserDashboard() {
   const cateScrollRef = useRef();
