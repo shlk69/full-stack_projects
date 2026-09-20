@@ -149,13 +149,13 @@ export const searchItems = async (req, res) => {
         const items = await Item.find({
             shop: { $in: shopIds },
             $or: [
-                {name:{$regex:query,$options:'i'}},
-                {category:{$regex:query,$options:'i'}}
+                { name: { $regex: query, $options: 'i' } },
+                { category: { $regex: query, $options: 'i' } }
             ]
         }).populate('shop', 'name image')
         return res.status(200).json(items)
     } catch (error) {
-        console.log('Error while searching the items ',error.message)
+        console.log('Error while searching the items ', error.message)
         return res.status(500).json({ message: `internal server error` })
 
     }

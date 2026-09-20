@@ -5,7 +5,7 @@ import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Home from "./pages/Home";
 import useGetCity from "./hooks/useGetCity";
 import useGetMyshop from "./hooks/useGetMyShop";
@@ -22,7 +22,13 @@ import useGetMyOrders from "./hooks/useGetMyOrders";
 import useUpdateLocation from "./hooks/useUpdateLocation";
 import TrackOrder from "./pages/TrackOrder";
 import Shop from "./pages/Shop";
+import { useEffect } from "react";
+import { io } from "socket.io-client";
+import { setSocket } from "./redux/user.slice";
 
+
+
+const serverUrl = 'http://localhost:9001'
 function App() {
   useGetCurrentUser()
   useUpdateLocation()
@@ -32,6 +38,17 @@ function App() {
   useGetShopByCity()
   useGetMyOrders()
   const { userData } = useSelector(state => state.user)
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    const socketInstance = io(serverUrl, { withCredentials: true })
+    dispatch(setSocket(socketInstance))
+    socketInstance.on('connect', () => {
+      if (userData) {
+        socketInstance.emit('identity',{userId:userData._id})
+      }
+    })
+  },[])
   return (
     <>
       <Routes>

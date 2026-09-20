@@ -8,8 +8,24 @@ import userRouter from './routes/user.routes.js'
 import shopRouter from './routes/shop.routes.js'
 import itemRouter from './routes/items.routes.js'
 import orderRouter from './routes/order.routes.js'
+import http from 'http'
+import { Server } from 'socket.io'
 
 const app = express()
+const server = http.createServer(app)
+
+
+const io = new Server(server, {
+    cors: {
+        origin: process.env.CLIENT_URL,
+        credentials: true
+    },
+    method: ['POST','GET']
+})
+
+app.set('io',io)
+
+
 
 const port = process.env.PORT || 3000
 app.use(express.json())
@@ -30,7 +46,7 @@ app.get('/', (req, res) => {
 })
 
 
-app.listen(port,() => {
+server.listen(port,() => {
     connectDb
     console.log('Server is running on port ',port)
 })
