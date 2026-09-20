@@ -70,7 +70,19 @@ const orderSchema = new mongoose.Schema({
     totalAmount: {
         type: Number
     },
-    shopOrders:[shopOrderSchema]
+    shopOrders: [shopOrderSchema],
+    payment: {
+        type: Boolean,
+        deafult:false
+    },
+    razorpayOrderId: {
+        type: String,
+        deafult:''
+    },
+    razorpayPaymentId: {
+        type: String,
+        deafult:''
+    }
 
 }, { timestamps: true })
 

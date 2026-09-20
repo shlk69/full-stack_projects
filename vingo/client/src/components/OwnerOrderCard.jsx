@@ -36,6 +36,30 @@ const handleUpdateStatus=async (orderId,shopId,status) => {
           Lat: {data?.deliveryAddress?.latitude} , Lon:
           {data?.deliveryAddress?.longitude}
         </p>
+        <div className="flex items-center gap-2 text-sm font-medium text-gray-700 my-2">
+          {data.paymentMethod === "online" ? (
+            <>
+              <span>Payment Status:</span>
+              <span
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                  data.payment
+                    ? "bg-green-100 text-green-800 border border-green-200"
+                    : "bg-amber-100 text-amber-800 border border-amber-200"
+                }`}>
+                {data.payment ? "Paid" : "Pending"}
+              </span>
+            </>
+          ) : (
+            <>
+              <span>Payment Method:</span>
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                {data.paymentMethod === "cod"
+                  ? "Cash on Delivery"
+                  : data.paymentMethod}
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="flex space-x-4 overflow-x-auto pb-2">

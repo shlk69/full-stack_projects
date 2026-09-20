@@ -26,7 +26,7 @@ function RecenterMap({ location }) {
 
 const Checkout = () => {
   const { location, address } = useSelector((state) => state.map);
-  const { cartItems, totalAmount } = useSelector((state) => state.user);
+  const { cartItems, totalAmount,userData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [addressInput, setAddressInput] = useState("");
   const apiKey = import.meta.env.VITE_GEOAPIKEY;
@@ -41,14 +41,13 @@ const Checkout = () => {
     getAddressByLatLng(lat, lng);
   };
 
-  const getCurrentLocation = () => {
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      dispatch(setLocation({ lat: latitude, long: longitude }));
-      getAddressByLatLng(latitude, longitude);
-    });
-  };
+ const getCurrentLocation = () => {
+   const latitude = userData.location.coordinates[1];
+   const longitude = userData.location.coordinates[0];
+   dispatch(setLocation({ lat: latitude, long: longitude }));
+   getAddressByLatLng(latitude, longitude);
+ };
+
   const getAddressByLatLng = async (lat, lng) => {
     try {
       const result = await axios.get(
@@ -82,18 +81,54 @@ const Checkout = () => {
             latitude: location.lat,
             longitude: location.long,
           },
-          totalAmount,
+          totalAmount:AmountWithDeliveryFee,
           cartItems,
         },
         { withCredentials: true },
       );
       console.log(data);
-      dispatch(addMyOrder(data))
-      navigate('/order-placed')
+      if (paymentMethod == "cod") {
+        dispatch(addMyOrder(result.data));
+        navigate("/order-placed");
+      } else {
+        const orderId = result.data.orderId;
+        const razorOrder = result.data.razorOrder;
+        openRazorpayWindow(orderId, razorOrder);
+      }
+
     } catch (error) {
       console.log(error);
     }
   };
+
+  const openRazorpayWindow = (orderId, razorOrder) => {
+    const options = {
+      description: "Food Delivery Website",
+      order_id: razorOrder.id,
+      handler: async function (response) {
+        try {
+          const result = await api.post(
+            `/order/verify-payment`,
+            {
+              razorpay_payment_id: response.razorpay_payment_id,
+              orderId,
+            },
+            { withCredentials: true },
+          );
+          dispatch(addMyOrder(result.data));
+          navigate("/order-placed");
+        } catch (error) {
+          console.log(error.message)
+        }
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
+
+
 
 
   useEffect(() => {

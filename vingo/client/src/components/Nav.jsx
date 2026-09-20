@@ -51,7 +51,9 @@ function Nav() {
   };
 
   useEffect(() => {
-    if(query) handleSearchItems()
+    if (query) handleSearchItems()
+    else dispatch(setSearchItems(null));
+
   },[query])
   
 

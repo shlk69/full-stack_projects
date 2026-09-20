@@ -5,12 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import FoodCard from "./FoodCard";
 import CategoryCard from "./CategoryCard";
+import { useNavigate } from "react-router-dom";
 
 function UserDashboard() {
   const cateScrollRef = useRef();
   const shopScrollRef = useRef();
   const navigate = useNavigate()
-  const { city, shopsInMyCity, itemsInMyCity } = useSelector(
+  const { city, shopsInMyCity, itemsInMyCity,searchItems } = useSelector(
     (state) => state.user,
   );
 
@@ -108,6 +109,20 @@ function UserDashboard() {
   return (
     <div className="w-screen min-h-screen flex flex-col gap-5 items-center bg-[#fff9f6] overflow-y-auto">
       <Nav />
+
+      {searchItems && searchItems.length > 0 && (
+        <div className="w-full max-w-6xl flex flex-col gap-5 items-start p-5 bg-white shadow-md rounded-2xl mt-4">
+          <h1 className="text-gray-900 text-2xl sm:text-3xl font-semibold border-b border-gray-200 pb-2">
+            Search Results
+          </h1>
+          <div className="w-full h-auto flex flex-wrap gap-6 justify-center">
+            {searchItems.map((item) => (
+              <FoodCard data={item} key={item._id} />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-6xl flex flex-col gap-5 items-start p-[10px]">
         <h1 className="text-gray-800 text-2xl sm:text-3xl">
           Inspiration for your first order

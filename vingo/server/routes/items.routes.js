@@ -1,10 +1,6 @@
 import express from "express"
 
-<<<<<<< HEAD
 import { addItem, deleteItem, editItem, getItemByCity, getItemById, getItemsByShop, searchItems } from "../controllers/item.controllers.js"
-=======
-import { addItem, deleteItem, editItem, getItemByCity, getItemById, getItemsByShop } from "../controllers/item.controllers.js"
->>>>>>> bce63109954241cc74aba0fbf1359abb97eec5db
 import { upload } from "../middleware/multer.js"
 import {auth} from '../middleware/auth.js'
 
