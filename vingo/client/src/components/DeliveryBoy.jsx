@@ -5,19 +5,11 @@ import api from "../api";
 import DeliveryBoyTracking from "./DeliveryBoyTracking";
 
 const DeliveryBoy = () => {
-<<<<<<< HEAD
-  const { userData } = useSelector((state) => state.user);
+  const { userData,socket } = useSelector((state) => state.user);
   const [availableAssignments, setAvailableAssignments] = useState(null);
   const [currentOrder, setCurrentOrder] = useState(null);
   const [showOtpbox, setShowOtpBox] = useState(false);
   const [otp, setOtp] = useState();
-=======
-  const { userData } = useSelector(state => state.user)
-  const [availableAssignments,setAvailableAssignments] = useState(null)
-  const [currentOrder, setCurrentOrder] = useState(null)
-  const [showOtpbox, setShowOtpBox] = useState(false)
-  
->>>>>>> 03eebffdf828a65a854804b40583ef00e9d0e2ae
 
   const getAssignments = async () => {
     try {
@@ -88,16 +80,20 @@ const DeliveryBoy = () => {
     }
   };
 
-<<<<<<< HEAD
-=======
 
-  const handleSendOtp = (e) => {
-    setShowOtpBox(true)
-  }
+  useEffect(() => {
+    socket?.on("newAssignment", (data) => {
+      if (data.sentTo == userData._id) {
+        setAvailableAssignments(prev=>[...prev, data]);
+      }
+    });
+
+    return () => {
+      socket?.off("newAssignment");
+    };
+  }, [socket]);
 
 
-
->>>>>>> 03eebffdf828a65a854804b40583ef00e9d0e2ae
   useEffect(() => {
     getAssignments();
     getCurrentOrder();
@@ -174,11 +170,7 @@ const DeliveryBoy = () => {
             <DeliveryBoyTracking data={currentOrder} />
             {!showOtpbox ? (
               <button
-<<<<<<< HEAD
                 onClick={sendOtp}
-=======
-                onClick={handleSendOtp}
->>>>>>> 03eebffdf828a65a854804b40583ef00e9d0e2ae
                 className="mt-4 w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-xl shadow-md hover:bg-green-600 active:scale-95 transition-all duration-200">
                 Mark As Delivered
               </button>
@@ -191,22 +183,15 @@ const DeliveryBoy = () => {
                   </span>
                 </p>
                 <input
-<<<<<<< HEAD
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-=======
->>>>>>> 03eebffdf828a65a854804b40583ef00e9d0e2ae
                   type="text"
                   className="w-full border px-3 py-2 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                   placeholder="Enter OTP"
                 />
-<<<<<<< HEAD
                 <button
                   onClick={verifyOtp}
                   className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold hover:bg-orange-600 transition-all">
-=======
-                <button className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold hover:bg-orange-600 transition-all">
->>>>>>> 03eebffdf828a65a854804b40583ef00e9d0e2ae
                   Submit OTP
                 </button>
               </div>
