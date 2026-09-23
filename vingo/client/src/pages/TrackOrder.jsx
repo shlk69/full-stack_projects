@@ -1,11 +1,13 @@
-import React from 'react'
 import api from '../api';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 const TrackOrder = () => {
   const { orderId } = useParams();
-  consr [currentOrder,setCurrentOrder] = useState()
+  consr[currentOrder, setCurrentOrder] = useState()
+  const [liveLocations, setLiveLocations] = useState({})
+  const  {socket} = useSelector(state=>state.user)
   const handleGetOrder = async () => {
     try {
       const result = await api.get(
@@ -18,6 +20,21 @@ const TrackOrder = () => {
       console.log(error);
     }
   };
+
+
+  useEffect(() => {
+    socket.on(
+      "updateDeliveryLocation",
+      ({ deliveryBoyId, latitude, longitude }) => {
+        setLiveLocations((prev) => ({
+          ...prev,
+          [deliveryBoyId]: { lat: latitude, lon: longitude },
+        }));
+      },
+    );
+  }, [socket]);
+
+
 
   useEffect(() => {
     handleGetOrder();
@@ -82,7 +99,7 @@ const TrackOrder = () => {
                 <div className="h-[400px] w-full rounded-2xl overflow-hidden shadow-md">
                   <DeliveryBoyTracking
                     data={{
-                      deliveryBoyLocation: {
+                      deliveryBoyLocation: liveLocations[shopOrder.assignedDeliveryBoy._id] || {
                         lat: shopOrder.assignedDeliveryBoy.location
                           .coordinates[1],
                         lon: shopOrder.assignedDeliveryBoy.location
