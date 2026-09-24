@@ -105,7 +105,7 @@ export const deleteItem = async (req, res) => {
 
 
 export const getItemByCity = async (req, res) => {
-try {
+    try {
         const { city } = req.params
         if (!city) {
             return res.status(400).json({ message: "city is required" })
@@ -123,7 +123,7 @@ try {
         return res.status(200).json(items)
 
     } catch (error) {
-        console.log('Error while finding the item by city ',error.message)
+        console.log('Error while finding the item by city ', error.message)
         return res.status(500).json({ message: `Internal server error` })
     }
 
@@ -172,7 +172,39 @@ export const getItemsByShop = async (req, res) => {
             shop, items: shop.items
         })
     } catch (error) {
-        console.log('Error while getting the current shop items ',error.message)
+        console.log('Error while getting the current shop items ', error.message)
         return res.status(500).json({ message: `internal server error` })
+    }
+}
+
+
+
+export const rating = async (req, res) => {
+    try {
+        const { itemId, rating } = req.body
+
+        if (!itemId || !rating) {
+            return res.status(400).json({ message: "itemId and rating is required" })
+        }
+
+        if (rating < 1 || rating > 5) {
+            return res.status(400).json({ message: "rating must be between 1 to 5" })
+        }
+
+        const item = await Item.findById(itemId)
+        if (!item) {
+            return res.status(400).json({ message: "item not found" })
+        }
+
+        const newCount = item.rating.count + 1
+        const newAverage = parseFloat(((item.rating.average * item.rating.count + rating) / newCount).toFixed(1))
+        
+        item.rating.count = newCount
+        item.rating.average = newAverage
+        await item.save()
+        return res.status(200).json({ rating: item.rating })
+
+    } catch (error) {
+        return res.status(500).json({ message: `search item error` })
     }
 }

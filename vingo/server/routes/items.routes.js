@@ -1,20 +1,14 @@
 import express from "express"
 
-<<<<<<< HEAD
-import { addItem, deleteItem, editItem, getItemByCity, getItemById, getItemsByShop, searchItems } from "../controllers/item.controllers.js"
-=======
-<<<<<<< HEAD
-import { addItem, deleteItem, editItem, getItemByCity, getItemById, getItemsByShop, searchItems } from "../controllers/item.controllers.js"
-=======
-import { addItem, deleteItem, editItem, getItemByCity, getItemById, getItemsByShop } from "../controllers/item.controllers.js"
->>>>>>> bce63109954241cc74aba0fbf1359abb97eec5db
->>>>>>> 7e8d91a488fa1a297fbb569095b974645608aed2
+import { addItem, deleteItem, editItem, getItemByCity, getItemById, getItemsByShop, rating, searchItems } from "../controllers/item.controllers.js"
+
 import { upload } from "../middleware/multer.js"
 import {auth} from '../middleware/auth.js'
 
 const itemRouter = express.Router()
 
 itemRouter.post("/add-item", auth, upload.single("image"), addItem)
+itemRouter.post("/rating", auth, rating)
 itemRouter.post("/search-items", searchItems)
 itemRouter.post("/edit-item/:itemId", auth, upload.single("image"), editItem)
 itemRouter.post("/get-by-id/:itemId", auth,getItemById)
