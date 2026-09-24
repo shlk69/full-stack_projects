@@ -91,7 +91,7 @@ export const placeOrder = async (req, res) => {
         await newOrder.populate("shopOrders.owner", "name socketId")
         await newOrder.populate("user", "name email mobile")
 
-        
+
         const io = req.app.get('io')
 
         if (io) {
@@ -136,7 +136,7 @@ export const verifyPayment = async (req, res) => {
         order.payment = true
         order.razorpayPaymentId = razorpay_payment_id
         await order.save()
-        
+
         await order.populate("shopOrders.shopOrderItems.item", "name image price")
         await order.populate("shopOrders.shop", "name")
         await order.populate("shopOrders.owner", "name socketId")
@@ -164,7 +164,7 @@ export const verifyPayment = async (req, res) => {
         return res.status(200).json(order)
     } catch (error) {
         console.log('Error while verifying  payment ', error.message)
-        return res.status(500).json({ message: 'Internal server error' })  
+        return res.status(500).json({ message: 'Internal server error' })
     }
 }
 
@@ -196,7 +196,7 @@ export const getMyOrders = async (req, res) => {
                 shopOrders: order.shopOrders.find(o => o.owner._id == req.userId),
                 createdAt: order.createdAt,
                 deliveryAddress: order.deliveryAddress,
-                payment:order.payment
+                payment: order.payment
             }))
 
             return res.status(200).json(filteredOrders)
@@ -281,7 +281,7 @@ export const updateOrderStatus = async (req, res) => {
                     const boySocketId = boy.socketId
                     if (boySocketId) {
                         io.to(boySocketId).emit('newAssignment', {
-                            sentTo:boy._id,
+                            sentTo: boy._id,
                             assignmentId: deliveryAssignment._id,
                             orderId: deliveryAssignment.order._id,
                             shopName: deliveryAssignment.shop.name,
@@ -294,7 +294,7 @@ export const updateOrderStatus = async (req, res) => {
             }
 
 
-             
+
 
         }
 
@@ -554,3 +554,55 @@ export const verifyDeliveryOtp = async (req, res) => {
     }
 }
 
+
+
+
+
+export const getTodayDeliveries = async (req, res) => {
+    try {
+        const deliveryBoyId = req.userId
+        const startsOfDay = new Date()
+        startsOfDay.setHours(0, 0, 0, 0)
+
+        const orders = await Order.find({
+            "shopOrders.assignedDeliveryBoy": deliveryBoyId,
+            "shopOrders.status": "delivered",
+            "shopOrders.deliveredAt": { $gte: startsOfDay }
+        }).lean()
+
+        let todaysDeliveries = []
+
+        orders.forEach(order => {
+            order.shopOrders.forEach(shopOrder => {
+                if (shopOrder.assignedDeliveryBoy == deliveryBoyId &&
+                    shopOrder.status == "delivered" &&
+                    shopOrder.deliveredAt &&
+                    shopOrder.deliveredAt >= startsOfDay
+                ) {
+                    todaysDeliveries.push(shopOrder)
+                }
+            })
+        })
+        let stats = {}
+
+        todaysDeliveries.forEach(shopOrder => {
+            const hour = new Date(shopOrder.deliveredAt).getHours()
+            stats[hour] = (stats[hour] || 0) + 1
+        })
+
+        let formattedStats = Object.keys(stats).map(hour => ({
+            hour: parseInt(hour),
+            count: stats[hour]
+        }))
+
+        formattedStats.sort((a, b) => a.hour - b.hour)
+
+        return res.status(200).json(formattedStats)
+
+
+    } catch (error) {
+        console.log('Error while getting current day deliveries ', error.message)
+        return res.status(500).json({ message: 'Internal server error' })
+
+    }
+}

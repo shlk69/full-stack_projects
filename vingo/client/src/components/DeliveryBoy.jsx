@@ -1,4 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Bar,
+} from "recharts";
 import Nav from "./Nav";
 import { useSelector } from "react-redux";
 import api from "../api";
@@ -11,7 +20,8 @@ const DeliveryBoy = () => {
   const [showOtpbox, setShowOtpBox] = useState(false);
   const [otp, setOtp] = useState();
 
-          const [deliveryBoyLocation, setDeliveryBoyLocation] = useState(null);
+  const [deliveryBoyLocation, setDeliveryBoyLocation] = useState(null);
+  const [todayDeliveries, setTodayDeliveries] = useState([]);
 
   const getAssignments = async () => {
     try {
@@ -56,7 +66,7 @@ const DeliveryBoy = () => {
   const verifyOtp = async (otp) => {
     try {
       const result = await api.post(
-        `/order/verify-delivery-otp/`,
+        `/order/verify-delivery-otp`,
         {
           orderId: currentOrder._id,
           shopOrderId: currentOrder.shopOrder._id,
@@ -65,6 +75,23 @@ const DeliveryBoy = () => {
         { withCredentials: true },
       );
       console.log(result.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleTodayDelivery = async (otp) => {
+    try {
+      const result = await api.post(
+        `/order/get-today-deliveries`,
+        {
+          orderId: currentOrder._id,
+          shopOrderId: currentOrder.shopOrder._id,
+          otp,
+        },
+        { withCredentials: true },
+      );
+      console.log(result.data);
+      setTodayDeliveries(result.data);
     } catch (error) {
       console.log(error);
     }
@@ -93,7 +120,6 @@ const DeliveryBoy = () => {
           const latitude = position.coords.latitude;
           const longitude = position.coords.longitude;
 
-
           setDeliveryBoyLocation({ lat: latitude, lon: longitude });
 
           socket.emit("updateLocation", {
@@ -120,6 +146,13 @@ const DeliveryBoy = () => {
     };
   }, [socket, userData]);
 
+  const ratePerDelivery = 50;
+  const totalEarning = todayDeliveries.reduce(
+    (sum, d) => sum + d.count * ratePerDelivery,
+    0,
+  );
+
+
   useEffect(() => {
     socket?.on("newAssignment", (data) => {
       if (data.sentTo == userData._id) {
@@ -135,6 +168,7 @@ const DeliveryBoy = () => {
   useEffect(() => {
     getAssignments();
     getCurrentOrder();
+    handleTodayDelivery();
   }, [userData]);
 
   return (
@@ -147,10 +181,38 @@ const DeliveryBoy = () => {
           </h1>
           <p className="text-[#ff4d2d]">
             <span className="font-semibold">Latitude:</span>
-            { deliveryBoyLocation?.lat}
+            {deliveryBoyLocation?.lat}
             <span className="font-semibold">Longitude:</span>
             {deliveryBoyLocation?.lon}
           </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-md p-5 w-[90%] mb-6 border border-orange-100">
+          <h1 className="text-lg font-bold mb-3 text-[#ff4d2d] ">
+            Today Deliveries
+          </h1>
+
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={todayDeliveries}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="hour" tickFormatter={(h) => `${h}:00`} />
+              <YAxis allowDecimals={false} />
+              <Tooltip
+                formatter={(value) => [value, "orders"]}
+                labelFormatter={(label) => `${label}:00`}
+              />
+              <Bar dataKey="count" fill="#ff4d2d" />
+            </BarChart>
+          </ResponsiveContainer>
+
+          <div className="max-w-sm mx-auto mt-6 p-6 bg-white rounded-2xl shadow-lg text-center">
+            <h1 className="text-xl font-semibold text-gray-800 mb-2">
+              Today's Earning
+            </h1>
+            <span className="text-3xl font-bold text-green-600">
+              ₹{totalEarning}
+            </span>
+          </div>
         </div>
 
         {!currentOrder && (
