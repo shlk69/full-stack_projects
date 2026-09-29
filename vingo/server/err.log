@@ -1,0 +1,2 @@
+Server is running on port  9001
+Unable to connect with  querySrv ENOTFOUND _mongodb._tcp.cluster0.widrysp.mongodb.net

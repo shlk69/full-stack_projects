@@ -1,32 +1,45 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import { FaStore, FaUtensils } from "react-icons/fa";
 import { FaArrowLeft, FaLocationDot } from "react-icons/fa6";
+import FoodCard from '../components/FoodCard';
 
 
 const Shop = () => {
-    const { shopId } = useParams()
-    const [items,setItems] = useState([])
-    const [shop, setShop] = useState([])
-    const navigate = useNavigate()
-    const handleShop = async () => {
-      try {
-        const result = await api.get(
-          `/item/get-by-shop/${shopId}`,
-          { withCredentials: true },
-          );
-          setShop(result.data)
-          setItems(result.data.items)
-        console.log(result.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+  const { shopId } = useParams()
+  const [items, setItems] = useState([])
+  const [shop, setShop] = useState([])
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+  const handleShop = async () => {
+    try {
+      setLoading(true);
+      const result = await api.get(
+        `/item/get-by-shop/${shopId}`,
+        { withCredentials: true },
+      );
+      setShop(result.data)
+      setItems(result.data.items)
+      console.log(result.data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-      handleShop();
-    }, [shopId]);
+  useEffect(() => {
+    handleShop();
+  }, [shopId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-red-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -60,14 +73,14 @@ const Shop = () => {
           <FaUtensils color="red" /> Our Menu
         </h2>
 
-        {items.length > 0 ? (
+        {items && items.length > 0 ? (
           <div className="flex flex-wrap justify-center gap-8">
             {items.map((item) => (
               <FoodCard data={item} key={item._id || item.id} />
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-500 text-lg">
+          <p className="text-center text-gray-500 text-lg animate-pulse">
             No Items Available
           </p>
         )}

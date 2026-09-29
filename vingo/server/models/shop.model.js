@@ -12,7 +12,7 @@ const shopSchema = new mongoose.Schema({
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required:true
+        required: true
     },
     city: {
         type: String,
@@ -20,19 +20,19 @@ const shopSchema = new mongoose.Schema({
     },
     state: {
         type: String,
-        required:true
+        required: true
     },
     address: {
-        typ: String,
-        required:true
+        type: String,
+        required: true
     },
     items: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:'Item'
+        ref: 'Item'
     }
 }, {
-    timestamps:true
+    timestamps: true
 })
 
 
-export const Shop = mongoose.model('Shop', userSchema);
+export const Shop = mongoose.model('Shop', shopSchema);

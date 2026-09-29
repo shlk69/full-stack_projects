@@ -26,11 +26,12 @@ function RecenterMap({ location }) {
 
 const Checkout = () => {
   const { location, address } = useSelector((state) => state.map);
-  const { cartItems, totalAmount,userData } = useSelector((state) => state.user);
+  const { cartItems, totalAmount, userData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [addressInput, setAddressInput] = useState("");
   const apiKey = import.meta.env.VITE_GEOAPIKEY;
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [loading, setLoading] = useState(false);
   const deliveryFee = totalAmount > 500 ? 0 : 40;
   const AmountWithDeliveryFee = totalAmount + deliveryFee;
   const navigate = useNavigate()
@@ -41,12 +42,12 @@ const Checkout = () => {
     getAddressByLatLng(lat, lng);
   };
 
- const getCurrentLocation = () => {
-   const latitude = userData.location.coordinates[1];
-   const longitude = userData.location.coordinates[0];
-   dispatch(setLocation({ lat: latitude, long: longitude }));
-   getAddressByLatLng(latitude, longitude);
- };
+  const getCurrentLocation = () => {
+    const latitude = userData.location.coordinates[1];
+    const longitude = userData.location.coordinates[0];
+    dispatch(setLocation({ lat: latitude, long: longitude }));
+    getAddressByLatLng(latitude, longitude);
+  };
 
   const getAddressByLatLng = async (lat, lng) => {
     try {
@@ -66,13 +67,14 @@ const Checkout = () => {
       );
       const { lat, lon } = data.features[0].properties;
       dispatch(setLocation({ lat, long: lon }));
-    } catch (error) {}
+    } catch (error) { }
   };
 
 
   const handlePlaceOrder = async () => {
     try {
-      const {data} = await api.post(
+      setLoading(true);
+      const result = await api.post(
         `/order/place-order`,
         {
           paymentMethod,
@@ -81,12 +83,12 @@ const Checkout = () => {
             latitude: location.lat,
             longitude: location.long,
           },
-          totalAmount:AmountWithDeliveryFee,
+          totalAmount: AmountWithDeliveryFee,
           cartItems,
         },
         { withCredentials: true },
       );
-      console.log(data);
+      console.log(result.data);
       if (paymentMethod == "cod") {
         dispatch(addMyOrder(result.data));
         navigate("/order-placed");
@@ -98,6 +100,8 @@ const Checkout = () => {
 
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -150,7 +154,7 @@ const Checkout = () => {
           </h2>
           <div className="flex gap-2 mb-3">
             <input
-              onChange={() => setAddressInput(e.target.value)}
+              onChange={(e) => setAddressInput(e.target.value)}
               value={addressInput}
               type="text"
               className="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff4d2d]"
@@ -194,11 +198,10 @@ const Checkout = () => {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div
-              className={`flex items-center gap-3 rounded-xl border p-4 text-left transition ${
-                paymentMethod === "cod"
+              className={`flex items-center gap-3 rounded-xl border p-4 text-left transition ${paymentMethod === "cod"
                   ? "border-[#ff4d2d] bg-orange-50 shadow"
                   : "border-gray-200 hover:border-gray-300"
-              }`}
+                }`}
               onClick={() => setPaymentMethod("cod")}>
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
                 <MdDeliveryDining className="text-green-600 text-xl" />
@@ -212,11 +215,10 @@ const Checkout = () => {
             </div>
 
             <div
-              className={`flex items-center gap-3 rounded-xl border p-4 text-left transition ${
-                paymentMethod === "online"
+              className={`flex items-center gap-3 rounded-xl border p-4 text-left transition ${paymentMethod === "online"
                   ? "border-[#ff4d2d] bg-orange-50 shadow"
                   : "border-gray-200 hover:border-gray-300"
-              }`}
+                }`}
               onClick={() => setPaymentMethod("online")}>
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
                 <FaMobileScreenButton className="text-purple-700 text-lg" />
@@ -266,8 +268,13 @@ const Checkout = () => {
         </section>
         <button
           onClick={handlePlaceOrder}
-          className="w-full bg-[#ff4d2d] hover:bg-[#e64526] text-white py-3 rounded-xl font-semibold">
-          {paymentMethod === "cod" ? "Place Order" : "Pay & Place Order"}
+          disabled={loading}
+          className={`w-full text-white py-3 rounded-xl font-semibold flex justify-center items-center ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#ff4d2d] hover:bg-[#e64526]'}`}>
+          {loading ? (
+            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-white"></div>
+          ) : (
+            paymentMethod === "cod" ? "Place Order" : "Pay & Place Order"
+          )}
         </button>
       </div>
     </div>
