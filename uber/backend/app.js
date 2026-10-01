@@ -2,6 +2,7 @@ const dotenv = require('dotenv')
 dotenv.config()
 const express = require('express')
 const userRoutes = require('./routes/user.routes')
+const captainRoutes = require('./routes/captain.routes')
 const cookieParser = require('cookie-parser')
 
 
@@ -21,6 +22,7 @@ app.get('/', (req, res) => {
     res.send('Hello , uber is here to pick u up!')
 })
 app.use('/users',userRoutes)
+app.use('/captains',captainRoutes)
 
 
 module.exports = app
