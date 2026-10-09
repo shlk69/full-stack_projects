@@ -1,8 +1,8 @@
-import  { useState, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// import { UserDataContext } from "../context/UserContext";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
+// import { UserDataContext } from "../context/UserContext";
 
 const UserLogin = () => {
   const [email, setEmail] = useState("");
@@ -39,18 +39,17 @@ const UserLogin = () => {
         localStorage.setItem("token", data.token);
         setUser(data.user);
 
-        toast.success("Login successful! Welcome back.");
-
         setEmail("");
         setPassword("");
 
+        toast.success("Login successful! Welcome back.");
         navigate("/home");
       }
     } catch (error) {
       const status = error.response?.status;
       const message = error.response?.data?.message;
 
-      if (status === 401 || status === 400) {
+      if (status === 400 || status === 401) {
         toast.error(message || "Invalid email or password.");
       } else if (status === 403) {
         toast.error(message || "Access denied.");
@@ -67,7 +66,7 @@ const UserLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
       <Toaster
         position="top-right"
         toastOptions={{
@@ -79,133 +78,188 @@ const UserLogin = () => {
           },
           success: {
             iconTheme: {
-              primary: "#10b981",
+              primary: "#f97316",
               secondary: "#ffffff",
             },
           },
         }}
       />
 
-      <div className="mx-auto w-full max-w-md">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <img
-            className="mx-auto mb-5 h-20 w-auto max-w-[180px] object-contain"
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYQy-OIkA6In0fTvVwZADPmFFibjmszu2A0g&s"
-            alt="App logo"
-          />
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center p-3 sm:p-6 lg:p-8">
+        <div className="grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl bg-white shadow-xl lg:grid-cols-2">
+          {/* Left Welcome Panel: desktop only */}
+          <section className="relative hidden overflow-hidden bg-[#171717] p-10 text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
+            <div className="pointer-events-none absolute -right-16 -top-12 h-56 w-56 rounded-full bg-orange-500/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 -left-10 h-52 w-52 rounded-full bg-orange-400/10 blur-3xl" />
 
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Welcome back
-          </h1>
+            <div className="relative z-10">
+              <div className="mb-10 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-2">
+                <span className="h-2 w-2 rounded-full bg-orange-400" />
+                <span className="text-xs font-semibold tracking-widest text-gray-200">
+                  WELCOME BACK
+                </span>
+              </div>
 
-          <p className="mt-2 text-sm text-gray-600 sm:text-base">
-            Sign in to continue your journey.
-          </p>
-        </div>
+              <h1 className="text-4xl font-extrabold leading-tight tracking-tight xl:text-5xl">
+                Welcome
+                <br />
+                back to your
+                <br />
+                <span className="text-orange-400">journey.</span>
+              </h1>
 
-        {/* Login Card */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg sm:p-8">
-          <form onSubmit={submitHandler} className="space-y-5">
-            {/* Email */}
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-semibold text-gray-800">
-                Email address
-              </label>
+              <p className="mt-5 max-w-sm text-base leading-7 text-gray-300">
+                Sign in to access your account and pick up right where you left
+                off.
+              </p>
 
-              <input
-                id="email"
-                type="email"
-                name="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white focus:ring-2 focus:ring-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
-              />
+              <div className="mt-10 space-y-5">
+                {[
+                  "Access your personal dashboard",
+                  "Manage your account",
+                  "Continue where you left off",
+                ].map((item, index) => (
+                  <div key={item} className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-sm font-semibold text-orange-400">
+                      0{index + 1}
+                    </span>
+                    <span className="text-sm text-gray-200">{item}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Password */}
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-2 block text-sm font-semibold text-gray-800">
-                Password
-              </label>
-
-              <input
-                id="password"
-                type="password"
-                name="password"
-                autoComplete="current-password"
-                placeholder="Enter your password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white focus:ring-2 focus:ring-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
-              />
+            <div className="relative z-10 mt-10 border-t border-white/10 pt-5">
+              <p className="text-xs leading-6 text-gray-400">
+                Good to have you back. Your next step starts here.
+              </p>
             </div>
+          </section>
 
-            {/* Login Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-base font-semibold text-white transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
-              {loading && (
-                <svg
-                  className="h-5 w-5 animate-spin"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
+          {/* Login Form: visible on every screen size */}
+          <section className="flex min-w-0 flex-col justify-center p-5 sm:p-8 md:p-10 lg:p-12">
+            <div className="mx-auto w-full max-w-md">
+              {/* Logo and Heading */}
+              <div className="mb-8 text-center">
+                <img
+                  className="mx-auto mb-5 h-16 w-auto max-w-[160px] object-contain sm:h-20"
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYQy-OIkA6In0fTvVwZADPmFFibjmszu2A0g&s"
+                  alt="App logo"
+                />
+
+                <p className="mb-2 text-xs font-bold tracking-[0.2em] text-orange-500">
+                  WELCOME BACK
+                </p>
+
+                <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">
+                  Sign in to your account
+                </h2>
+
+                <p className="mt-2 text-sm text-gray-500 sm:text-base">
+                  Sign in to continue your journey.
+                </p>
+              </div>
+
+              {/* Login Form */}
+              <form onSubmit={submitHandler} className="space-y-5">
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-2 block text-sm font-semibold text-gray-800">
+                    Email address
+                  </label>
+
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    className="w-full min-w-0 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="mb-2 block text-sm font-semibold text-gray-800">
+                    Password
+                  </label>
+
+                  <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    className="w-full min-w-0 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                </svg>
-              )}
+                </div>
 
-              {loading ? "Signing in..." : "Login"}
-            </button>
-          </form>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-3.5 text-base font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-500/25 disabled:cursor-not-allowed disabled:opacity-60">
+                  {loading && (
+                    <svg
+                      className="h-5 w-5 animate-spin"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                  )}
 
-          {/* Signup Link */}
-          <p className="mt-6 text-center text-sm text-gray-600 sm:text-base">
-            New here?
-            <Link
-              to="/signup"
-              className="font-semibold text-blue-600 transition hover:text-blue-800 hover:underline">
-              Create an account
-            </Link>
-          </p>
+                  {loading ? "Signing in..." : "Login"}
+                </button>
+              </form>
+
+              {/* Signup Link */}
+              <p className="mt-6 text-center text-sm text-gray-600 sm:text-base">
+                New here?{" "}
+                <Link
+                  to="/signup"
+                  className="font-bold text-orange-600 transition hover:text-orange-700 hover:underline">
+                  Create an account
+                </Link>
+              </p>
+
+              {/* Captain Login */}
+              <div className="mt-5">
+                <Link
+                  to="/captain-login"
+                  className="flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 transition hover:border-orange-300 hover:bg-orange-50 focus:outline-none focus:ring-4 focus:ring-orange-500/10 sm:text-base">
+                  Sign in as Captain
+                </Link>
+              </div>
+
+              <p className="mx-auto mt-7 max-w-sm text-center text-xs leading-relaxed text-gray-400">
+                Secure login · Access your account anytime
+              </p>
+            </div>
+          </section>
         </div>
-
-        {/* Captain Login */}
-        <div className="mt-5">
-          <Link
-            to="/captain-login"
-            className="flex w-full items-center justify-center rounded-xl bg-emerald-500 px-4 py-3 text-base font-semibold text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2">
-            Sign in as Captain
-          </Link>
-        </div>
-
-        <p className="mt-6 text-center text-xs text-gray-400">
-          Secure login · Access your account anytime
-        </p>
       </div>
     </div>
   );
