@@ -415,7 +415,7 @@ const CaptainSignup = () => {
                       </option>
                       <option value="car">Car</option>
                       <option value="auto">Auto</option>
-                      <option value="moto">Motorcycle</option>
+                      <option value="motorcycle">Motorcycle</option>
                     </select>
                   </div>
                 </div>
