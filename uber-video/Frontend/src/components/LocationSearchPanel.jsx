@@ -48,4 +48,4 @@ const LocationSearchPanel = ({
   );
 };
 
-export default LocationSearchPanel;
+export default LocationSearchPanel; 

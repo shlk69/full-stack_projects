@@ -1,6 +1,7 @@
-const axios = require('axios')
-
+const axios = require('axios');
+const captainModel = require('../models/captain.model');
 const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
+
 
 module.exports.getAddressCoordinate = async (address) => {
     if (!address?.trim()) {
@@ -76,9 +77,6 @@ module.exports.getDistanceTime = async (origin, destination) => {
     };
 };
 
-
-import axios from "axios";
-
 module.exports.getAutoCompleteSuggestions = async (input) => {
     if (!input) {
         throw new Error("query is required");
@@ -120,3 +118,16 @@ module.exports.getAutoCompleteSuggestions = async (input) => {
         throw err;
     }
 };
+
+
+module.exports.getCaptainsInTheArea = async (ltd,lng,radius) => {
+    const captains = await captainModel.find({
+        location: {
+            $geoWithin: {
+                $centerSphere:[[ltd,lng],radius/6371]
+            }
+        }
+    })
+    return captains
+}
+
