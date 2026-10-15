@@ -5,7 +5,7 @@ services:
     rootDir: uber-video
     plan: free
     numInstances: 1
-    buildCommand: npm ci && npm ci --prefix Backend && npm ci --prefix Frontend && npm test --prefix Backend && npm run lint --prefix Frontend && npm run build --prefix Frontend && npm run check:secrets
+    buildCommand: npm ci && npm ci --prefix Backend && npm ci --prefix Frontend --include=dev && npm test --prefix Backend && npm run lint --prefix Frontend && npm run build --prefix Frontend && npm run check:secrets
     startCommand: cd Backend && npm start
     healthCheckPath: /health
     envVars:
