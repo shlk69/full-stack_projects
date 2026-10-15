@@ -7,7 +7,7 @@ import { useEffect, useContext } from "react";
 import { SocketContext } from "../context/ContextDefinitions";
 import { CaptainDataContext } from "../context/ContextDefinitions";
 import axios from "axios";
-import RidePopUp from "../components/RidePopUp";
+import RidePopUp from "../components/RidePopup";
 import LiveTracking from "../components/LiveTracking";
 
 const CaptainHome = () => {
