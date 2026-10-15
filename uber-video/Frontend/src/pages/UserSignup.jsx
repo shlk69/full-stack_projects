@@ -1,8 +1,8 @@
-import React, { useState, useContext } from "react";
+import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import { UserDataContext } from "../context/userContext";
+import { UserDataContext } from "../context/ContextDefinitions";
 
 const UserSignup = () => {
   const [email, setEmail] = useState("");
@@ -225,6 +225,11 @@ const UserSignup = () => {
 
                 {/* Password */}
                 <div className="relative">
+                  <label
+                    htmlFor="signup-email"
+                    className="mb-2 block text-sm font-semibold text-gray-800">
+                    Password
+                  </label>
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"

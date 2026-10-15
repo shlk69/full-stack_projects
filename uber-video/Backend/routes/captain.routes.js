@@ -28,7 +28,10 @@ router.post('/login', [
 
 router.get('/profile', authMiddleware.authCaptain, captainController.getCaptainProfile)
 
+router.get('/dashboard-stats', authMiddleware.authCaptain, captainController.getDashboardStats)
+
 router.get('/logout', authMiddleware.authCaptain, captainController.logoutCaptain)
 
 
+router.get('/reviews', authMiddleware.authCaptain, require('../controllers/checkout.controller').captainReviews);
 module.exports = router;

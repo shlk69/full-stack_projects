@@ -1,6 +1,10 @@
-import React from "react";
-
 const ConfirmRide = (props) => {
+  const vehicleImages = {
+    car: "/vehicles/car.svg",
+    moto: "/vehicles/moto.svg",
+    auto: "/vehicles/auto.svg",
+  };
+
   return (
     <div className="relative w-full max-w-lg mx-auto px-4 sm:px-6 pb-4">
       <h5
@@ -19,8 +23,8 @@ const ConfirmRide = (props) => {
       <div className="flex flex-col items-center gap-2">
         <img
           className="w-full max-w-[220px] h-auto max-h-32 object-contain"
-          src="https://swyft.pl/wp-content/uploads/2023/05/how-many-people-can-a-uberx-take.jpg"
-          alt="Ride vehicle"
+          src={vehicleImages[props.vehicleType] || vehicleImages.car}
+          alt={`${props.vehicleType || "Selected"} ride vehicle`}
         />
 
         <div className="w-full mt-4">
@@ -60,11 +64,7 @@ const ConfirmRide = (props) => {
         </div>
 
         <button
-          onClick={() => {
-            props.setVehicleFound(true);
-            props.setConfirmRidePanel(false);
-            props.createRide();
-          }}
+          onClick={props.createRide}
           className="w-full mt-4 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold p-3 rounded-lg transition-colors"
         >
           Confirm

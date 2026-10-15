@@ -1,15 +1,19 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import FinishRide from "../components/FinishRide";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-// import LiveTracking from "../components/LiveTracking";
+import LiveTracking from "../components/LiveTracking";
 
 const CaptainRiding = () => {
   const [finishRidePanel, setFinishRidePanel] = useState(false);
   const finishRidePanelRef = useRef(null);
   const location = useLocation();
   const rideData = location.state?.ride;
+  const distanceKm = Number(rideData?.distance) / 1000;
+  const formattedDistance = Number.isFinite(distanceKm) && distanceKm > 0
+    ? `${distanceKm.toFixed(2)} KM trip`
+    : "Trip distance unavailable";
 
   useGSAP(
     function () {
@@ -27,8 +31,8 @@ const CaptainRiding = () => {
   );
 
   return (
-    <div className="h-screen relative flex flex-col justify-end">
-      <div className="fixed p-6 top-0 flex items-center justify-between w-screen">
+    <div className="h-screen relative isolate flex flex-col justify-end">
+      <div className="fixed z-30 p-6 top-0 flex items-center justify-between w-screen">
         <img
           className="w-16"
           src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
@@ -42,7 +46,7 @@ const CaptainRiding = () => {
       </div>
 
       <div
-        className="h-1/5 p-6 flex items-center justify-between relative bg-yellow-400 pt-10"
+        className="h-1/5 p-6 flex items-center justify-between relative z-20 bg-yellow-400 pt-10"
         onClick={() => {
           setFinishRidePanel(true);
         }}>
@@ -51,7 +55,7 @@ const CaptainRiding = () => {
           onClick={() => {}}>
           <i className="text-3xl text-gray-800 ri-arrow-up-wide-line"></i>
         </h5>
-        <h4 className="text-xl font-semibold">4 KM away</h4>
+        <h4 className="text-xl font-semibold">{formattedDistance}</h4>
         <button className=" bg-green-600 text-white font-semibold p-3 px-10 rounded-lg">
           Complete Ride
         </button>
@@ -62,8 +66,8 @@ const CaptainRiding = () => {
         <FinishRide ride={rideData} setFinishRidePanel={setFinishRidePanel} />
       </div>
 
-      <div className="h-screen fixed w-screen top-0 z-[-1]">
-        <LiveTracking />
+      <div className="absolute inset-x-0 top-0 h-[80%] z-0">
+        <LiveTracking ride={rideData} role="captain" />
       </div>
     </div>
   );

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: uber-video
+    runtime: node
+    plan: free
+    numInstances: 1
+    buildCommand: npm ci && npm ci --prefix Backend && npm ci --prefix Frontend && npm test --prefix Backend && npm run lint --prefix Frontend && npm run build --prefix Frontend
+    startCommand: cd Backend && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: DB_CONNECT
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MAPBOX_ACCESS_TOKEN
+        sync: false
+      - key: VITE_MAPBOX_TOKEN
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false

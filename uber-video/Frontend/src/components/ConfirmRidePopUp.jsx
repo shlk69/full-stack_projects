@@ -1,11 +1,14 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const ConfirmRidePopUp = (props) => {
   const [otp, setOtp] = useState("");
   const navigate = useNavigate();
+  const distanceKm = Number(props.ride?.distance) / 1000;
+  const formattedDistance = Number.isFinite(distanceKm) && distanceKm > 0
+    ? `${distanceKm.toFixed(2)} KM`
+    : "Distance unavailable";
 
   const submitHander = async (e) => {
     e.preventDefault();
@@ -52,7 +55,7 @@ const ConfirmRidePopUp = (props) => {
             {props.ride?.user.fullname.firstname}
           </h2>
         </div>
-        <h5 className="text-lg font-semibold">2.2 KM</h5>
+        <h5 className="text-lg font-semibold">{formattedDistance}</h5>
       </div>
       <div className="flex gap-2 justify-between flex-col items-center">
         <div className="w-full mt-5">

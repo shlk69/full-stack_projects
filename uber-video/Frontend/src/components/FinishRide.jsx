@@ -1,12 +1,20 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const FinishRide = (props) => {
   const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const distanceKm = Number(props.ride?.distance) / 1000;
+  const formattedDistance = Number.isFinite(distanceKm) && distanceKm > 0
+    ? `${distanceKm.toFixed(2)} KM`
+    : "Distance unavailable";
 
   async function endRide() {
+    if (busy) return;
+    setBusy(true); setError("");
+    try {
     const response = await axios.post(
       `${import.meta.env.VITE_BASE_URL}/rides/end-ride`,
       {
@@ -19,9 +27,9 @@ const FinishRide = (props) => {
       },
     );
 
-    if (response.status === 200) {
-      navigate("/captain-home");
-    }
+    if (response.status === 200) navigate("/captain-home");
+    } catch (err) { setError(err.response?.data?.message || "Unable to finish ride. Please retry."); }
+    finally { setBusy(false); }
   }
 
   return (
@@ -45,7 +53,7 @@ const FinishRide = (props) => {
             {props.ride?.user.fullname.firstname}
           </h2>
         </div>
-        <h5 className="text-lg font-semibold">2.2 KM</h5>
+        <h5 className="text-lg font-semibold">{formattedDistance}</h5>
       </div>
       <div className="flex gap-2 justify-between flex-col items-center">
         <div className="w-full mt-5">
@@ -77,10 +85,12 @@ const FinishRide = (props) => {
         </div>
 
         <div className="mt-10 w-full">
+          {error && <p role="alert" className="text-red-600">{error}</p>}
           <button
+            disabled={busy}
             onClick={endRide}
             className="w-full mt-5 flex  text-lg justify-center bg-green-600 text-white font-semibold p-3 rounded-lg">
-            Finish Ride
+            {busy ? "Finishing…" : "Finish Ride"}
           </button>
         </div>
       </div>

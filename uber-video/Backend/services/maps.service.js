@@ -120,14 +120,70 @@ module.exports.getAutoCompleteSuggestions = async (input) => {
 };
 
 
-module.exports.getCaptainsInTheArea = async (ltd,lng,radius) => {
-    const captains = await captainModel.find({
-        location: {
-            $geoWithin: {
-                $centerSphere:[[ltd,lng],radius/6371]
-            }
-        }
-    })
-    return captains
-}
+module.exports.getCaptainsInTheArea = async (latitude, longitude, radiusKm) => {
+    if (![latitude, longitude, radiusKm].every(Number.isFinite) ||
+        Math.abs(latitude) > 90 ||
+        Math.abs(longitude) > 180 ||
+        radiusKm <= 0) {
+        throw new Error('Valid coordinates and search radius are required');
+    }
 
+    const latitudeDelta = radiusKm / 111;
+    const longitudeDelta = radiusKm / (111 * Math.cos(latitude * Math.PI / 180));
+    const candidates = await captainModel.find({
+        status: 'active',
+        socketId: { $exists: true, $ne: null },
+        'location.ltd': {
+            $gte: latitude - latitudeDelta,
+            $lte: latitude + latitudeDelta,
+        },
+        'location.lng': {
+            $gte: longitude - longitudeDelta,
+            $lte: longitude + longitudeDelta,
+        },
+    });
+
+    return candidates.filter((captain) => {
+        const distanceKm = module.exports.getDistanceInKm(
+            { latitude: captain.location?.ltd, longitude: captain.location?.lng },
+            { latitude, longitude },
+        );
+        return distanceKm !== null && distanceKm <= radiusKm;
+    });
+};
+
+module.exports.getDistanceInKm = (origin, destination) => {
+    const { latitude: originLatitude, longitude: originLongitude } = origin || {};
+    const { latitude: destinationLatitude, longitude: destinationLongitude } =
+        destination || {};
+
+    if (
+        ![originLatitude, originLongitude, destinationLatitude, destinationLongitude]
+            .every(Number.isFinite) ||
+        Math.abs(originLatitude) > 90 ||
+        Math.abs(destinationLatitude) > 90 ||
+        Math.abs(originLongitude) > 180 ||
+        Math.abs(destinationLongitude) > 180
+    ) {
+        return null;
+    }
+
+    const radians = (degrees) => degrees * Math.PI / 180;
+    const latitudeDifference = radians(destinationLatitude - originLatitude);
+    const longitudeDifference = radians(destinationLongitude - originLongitude);
+    const haversine =
+        Math.sin(latitudeDifference / 2) ** 2 +
+        Math.cos(radians(originLatitude)) *
+        Math.cos(radians(destinationLatitude)) *
+        Math.sin(longitudeDifference / 2) ** 2;
+
+    return 6371 * 2 * Math.atan2(
+        Math.sqrt(haversine),
+        Math.sqrt(1 - haversine),
+    );
+};
+
+module.exports.getOnlineCaptains = async () => captainModel.find({
+    status: 'active',
+    socketId: { $exists: true, $ne: null },
+});

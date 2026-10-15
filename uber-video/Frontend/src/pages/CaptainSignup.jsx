@@ -1,8 +1,7 @@
-import React, { useContext, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import { CaptainDataContext } from "../context/CaptainContext";
 
 const CaptainSignup = () => {
   const navigate = useNavigate();
@@ -12,7 +11,6 @@ const CaptainSignup = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { captain, setCaptain } = useContext(CaptainDataContext)
   
 
   const togglePasswordVisibility = () => {

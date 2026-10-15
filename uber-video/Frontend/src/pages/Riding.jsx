@@ -1,9 +1,9 @@
-import React from "react";
 import { Link, useLocation } from "react-router-dom"; 
 import { useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import LiveTracking from "../components/LiveTracking";
-import { SocketContext } from "../context/SocketContext";
+import { SocketContext } from "../context/ContextDefinitions";
 
 const Riding = () => {
   const location = useLocation();
@@ -11,9 +11,29 @@ const Riding = () => {
   const { socket } = useContext(SocketContext);
   const navigate = useNavigate();
 
-  socket.on("ride-ended", () => {
-    navigate("/home");
-  });
+  useEffect(() => {
+    if (!ride?._id) return;
+    let active = true;
+    const ended = completed => {
+      if (completed?._id === ride._id) navigate('/ride-complete/' + completed._id);
+    };
+    const check = async () => {
+      try {
+        const { data } = await axios.get(import.meta.env.VITE_BASE_URL + '/rides/' + ride._id + '/status', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+        if (active && data.status === 'completed') navigate('/ride-complete/' + ride._id);
+      } catch { /* Retry on next poll during a temporary connection failure. */ }
+    };
+    const join = () => {
+      const userId = typeof ride.user === 'string' ? ride.user : ride.user?._id;
+      if (userId) socket.emit('join', { token: localStorage.getItem('token'), userType: 'user', userId });
+      check();
+    };
+    socket.on('ride-ended', ended);
+    socket.on('connect', join);
+    if (socket.connected) join();
+    const timer = setInterval(check, 10000);
+    return () => { active = false; clearInterval(timer); socket.off('connect', join); socket.off('ride-ended', ended); };
+  }, [ride?._id, ride?.user, socket, navigate]);
 
   return (
     <div className="h-screen">
@@ -23,7 +43,7 @@ const Riding = () => {
         <i className="text-lg font-medium ri-home-5-line"></i>
       </Link>
       <div className="h-1/2">
-        <LiveTracking />
+        <LiveTracking ride={ride} />
       </div>
       <div className="h-1/2 p-4">
         <div className="flex items-center justify-between">
@@ -34,10 +54,10 @@ const Riding = () => {
           />
           <div className="text-right">
             <h2 className="text-lg font-medium capitalize">
-              {ride?.captain.fullname.firstname}
+              {ride?.captain?.fullname?.firstname}
             </h2>
             <h4 className="text-xl font-semibold -mt-1 -mb-1">
-              {ride?.captain.vehicle.plate}
+              {ride?.captain?.vehicle?.plate}
             </h4>
             <p className="text-sm text-gray-600">Maruti Suzuki Alto</p>
           </div>
@@ -63,8 +83,8 @@ const Riding = () => {
             </div>
           </div>
         </div>
-        <button className="w-full mt-5 bg-green-600 text-white font-semibold p-2 rounded-lg">
-          Make a Payment
+        <button disabled className="w-full mt-5 bg-green-600 text-white font-semibold p-2 rounded-lg">
+          Payment available after ride completion
         </button>
       </div>
     </div>

@@ -1,6 +1,9 @@
-import React from "react";
-
 const RidePopUp = (props) => {
+  const tripDistanceKm = Number(props.ride?.distance) / 1000;
+  const formattedDistance = Number.isFinite(tripDistanceKm) && tripDistanceKm > 0
+    ? `${tripDistanceKm.toFixed(2)} KM trip`
+    : "Distance unavailable";
+
   return (
     <div>
       <h5
@@ -24,7 +27,7 @@ const RidePopUp = (props) => {
               props.ride?.user.fullname.lastname}
           </h2>
         </div>
-        <h5 className="text-lg font-semibold">2.2 KM</h5>
+        <h5 className="text-lg font-semibold">{formattedDistance}</h5>
       </div>
       <div className="flex gap-2 justify-between flex-col items-center">
         <div className="w-full mt-5">

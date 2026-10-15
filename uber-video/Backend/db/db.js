@@ -1,12 +1,6 @@
 const mongoose = require('mongoose');
-
-
-function connectToDb() {
-    mongoose.connect(process.env.DB_CONNECT
-    ).then(() => {
-        console.log('Connected to DB');
-    }).catch(err => console.log(err));
-}
-
-
-module.exports = connectToDb;
+module.exports = async function connectToDb() {
+    if (!process.env.DB_CONNECT) throw new Error('DB_CONNECT is required');
+    await mongoose.connect(process.env.DB_CONNECT, { serverSelectionTimeoutMS: 10000 });
+    console.log('Connected to DB');
+};

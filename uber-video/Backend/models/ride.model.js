@@ -38,6 +38,13 @@ const rideSchema = new mongoose.Schema({
         type: Number,
     }, // in meters
 
+    paymentStatus: { type: String, enum: ['pending', 'paid'], default: 'pending' },
+    paidAt: Date,
+    review: {
+        rating: { type: Number, min: 1, max: 5 },
+        comment: { type: String, maxlength: 1000 },
+        createdAt: Date,
+    },
     paymentID: {
         type: String,
     },
@@ -54,5 +61,7 @@ const rideSchema = new mongoose.Schema({
         required: true,
     },
 })
+
+rideSchema.index({ captain: 1, status: 1 });
 
 module.exports = mongoose.model('ride', rideSchema);

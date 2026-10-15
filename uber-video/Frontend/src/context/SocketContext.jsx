@@ -1,9 +1,10 @@
-import React, { createContext, useEffect } from "react";
+import { useEffect } from "react";
 import { io } from "socket.io-client";
 
-export const SocketContext = createContext();
+import { SocketContext } from "./ContextDefinitions";
 
-const socket = io(`${import.meta.env.VITE_BASE_URL}`); 
+const apiBase = import.meta.env.VITE_BASE_URL;
+const socket = io(apiBase?.startsWith('/') ? window.location.origin : apiBase); 
 
 const SocketProvider = ({ children }) => {
   useEffect(() => {

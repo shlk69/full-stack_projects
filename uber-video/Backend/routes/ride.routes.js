@@ -41,4 +41,11 @@ router.post('/end-ride',
 
 
 
+const checkout = require('../controllers/checkout.controller');
+router.get('/completed', authMiddleware.authUser, checkout.completed);
+router.get('/:rideId/status', authMiddleware.authUser, checkout.status);
+router.get('/:rideId/checkout', authMiddleware.authUser, checkout.details);
+router.post('/:rideId/payment-order', authMiddleware.authUser, checkout.order);
+router.post('/:rideId/payment-verify', authMiddleware.authUser, checkout.verify);
+router.post('/:rideId/review', authMiddleware.authUser, checkout.review);
 module.exports = router;

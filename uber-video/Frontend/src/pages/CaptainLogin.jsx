@@ -1,8 +1,8 @@
-import React, { useState, useContext } from "react";
+import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import { CaptainDataContext } from "../context/CaptainContext";
+import { CaptainDataContext } from "../context/ContextDefinitions";
 
 const Captainlogin = () => {
   const [email, setEmail] = useState("");
@@ -14,7 +14,7 @@ const Captainlogin = () => {
     setShowPassword((prev) => !prev);
   };
 
-  const {captain, setCaptain } = useContext(CaptainDataContext);
+  const { setCaptain } = useContext(CaptainDataContext);
   const navigate = useNavigate();
 
   const submitHandler = async (e) => {

@@ -35,6 +35,15 @@ const captainSchema = new mongoose.Schema({
         enum: [ 'active', 'inactive' ],
         default: 'inactive',
     },
+    totalOnlineSeconds: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
+    onlineSince: {
+        type: Date,
+        default: null,
+    },
 
     vehicle: {
         color: {

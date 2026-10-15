@@ -1,9 +1,8 @@
-import React, { useContext } from "react";
 import { Route, Routes } from "react-router-dom";
 import Start from "./pages/Start";
 import UserLogin from "./pages/UserLogin";
 import UserSignup from "./pages/UserSignup";
-import Captainlogin from "./pages/Captainlogin";
+import Captainlogin from "./pages/CaptainLogin";
 import CaptainSignup from "./pages/CaptainSignup";
 import UserProtectedWrapper from './pages/UserProtectedWrapper'
 import Home from "./pages/Home";
@@ -16,12 +15,15 @@ import Riding from "./pages/Riding";
 import "remixicon/fonts/remixicon.css";
 import CaptainRiding from "./pages/CaptainRiding";
 
+import RideComplete from "./pages/RideComplete";
+
 const App = () => {
   return (
     <div>
       <Routes>
         <Route path="/" element={<Start />} />
         <Route path="/login" element={<UserLogin />} />
+        <Route path="/ride-complete/:rideId" element={<UserProtectedWrapper><RideComplete /></UserProtectedWrapper>} />
         <Route path="/riding" element={<Riding />} />
         <Route path="/captain-riding" element={<CaptainRiding />} />
 

@@ -1,6 +1,6 @@
 const captainModel = require('../models/captain.model');
 const captainService = require('../services/captain.service');
-const blackListTokenModel = require('../models/blackListToken.model');
+const blackListTokenModel = require('../models/blacklistToken.model');
 const { validationResult } = require('express-validator');
 
 
@@ -35,6 +35,7 @@ module.exports.registerCaptain = async (req, res, next) => {
 
     const token = captain.generateAuthToken();
 
+    captain.password = undefined;
     res.status(201).json({ token, captain });
 
 }
@@ -61,8 +62,9 @@ module.exports.loginCaptain = async (req, res, next) => {
 
     const token = captain.generateAuthToken();
 
-    res.cookie('token', token);
+    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
 
+    captain.password = undefined;
     res.status(200).json({ token, captain });
 }
 
@@ -70,9 +72,20 @@ module.exports.getCaptainProfile = async (req, res, next) => {
     res.status(200).json({ captain: req.captain });
 }
 
+module.exports.getDashboardStats = async (req, res) => {
+    try {
+        const stats = await captainService.getDashboardStats(req.captain);
+        return res.status(200).json({ stats });
+    } catch (error) {
+        console.error('Failed to load captain dashboard stats:', error);
+        return res.status(500).json({ message: 'Unable to load captain dashboard stats' });
+    }
+}
+
 module.exports.logoutCaptain = async (req, res, next) => {
     const token = req.cookies.token || req.headers.authorization?.split(' ')[ 1 ];
 
+    await captainService.markCaptainOffline(req.captain._id, req.captain.socketId);
     await blackListTokenModel.create({ token });
 
     res.clearCookie('token');

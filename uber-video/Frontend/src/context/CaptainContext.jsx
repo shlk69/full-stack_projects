@@ -1,6 +1,6 @@
-import { createContext, useState } from "react";
+import { useState } from "react";
 
-export const CaptainDataContext = createContext();
+import { CaptainDataContext } from "./ContextDefinitions";
 
 const CaptainContext = ({ children }) => {
   const [captain, setCaptain] = useState(null);
