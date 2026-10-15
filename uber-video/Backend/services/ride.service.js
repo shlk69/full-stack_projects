@@ -106,7 +106,7 @@ module.exports.confirmRide = async ({
         throw new Error('Ride id is required');
     }
 
-    const accepted = await rideModel.findOneAndUpdate({ _id: rideId, status: 'pending' }, { status: 'accepted', captain: captain._id }, { new: true });
+    const accepted = await rideModel.findOneAndUpdate({ _id: rideId, status: 'pending' }, { status: 'accepted', captain: captain._id }, { returnDocument: 'after' });
     if (!accepted) throw new Error('Ride unavailable or already accepted');
 
     const ride = await rideModel.findOne({
@@ -143,12 +143,9 @@ module.exports.startRide = async ({ rideId, otp, captain }) => {
         throw new Error('Invalid OTP');
     }
 
-    await rideModel.findOneAndUpdate({
-        _id: rideId
-    }, {
-        status: 'ongoing'
-    })
-
+    const started = await rideModel.findOneAndUpdate({ _id: rideId, captain: captain._id, status: 'accepted' }, { status: 'ongoing' }, { returnDocument: 'after' });
+    if (!started) throw new Error('Ride was cancelled or already started');
+    ride.status = 'ongoing';
     return ride;
 }
 
@@ -170,11 +167,8 @@ module.exports.endRide = async ({ rideId, captain }) => {
         throw new Error('Ride not ongoing');
     }
 
-    await rideModel.findOneAndUpdate({
-        _id: rideId
-    }, {
-        status: 'completed'
-    })
+    const completed = await rideModel.findOneAndUpdate({ _id: rideId, captain: captain._id, status: 'ongoing' }, { status: 'completed' }, { returnDocument: 'after' });
+    if (!completed) throw new Error('Ride is no longer ongoing');
 
     ride.status = 'completed';
     return ride;

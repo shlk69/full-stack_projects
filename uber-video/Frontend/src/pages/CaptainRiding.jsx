@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import FinishRide from "../components/FinishRide";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import TripTools from "../components/TripTools";
 import LiveTracking from "../components/LiveTracking";
 
 const CaptainRiding = () => {
@@ -66,6 +67,7 @@ const CaptainRiding = () => {
         <FinishRide ride={rideData} setFinishRidePanel={setFinishRidePanel} />
       </div>
 
+      <div className="absolute left-3 top-24 z-30 max-h-[50dvh] w-[min(26rem,calc(100%-1.5rem))] overflow-y-auto"><TripTools ride={rideData} role="captain" /></div>
       <div className="absolute inset-x-0 top-0 h-[80%] z-0">
         <LiveTracking ride={rideData} role="captain" />
       </div>

@@ -38,6 +38,7 @@ const rideSchema = new mongoose.Schema({
         type: Number,
     }, // in meters
 
+    cancellation: { reason: { type: String, maxlength: 300 }, by: { type: String, enum: ['user', 'captain'] }, at: Date },
     paymentStatus: { type: String, enum: ['pending', 'paid'], default: 'pending' },
     paidAt: Date,
     review: {
@@ -60,7 +61,7 @@ const rideSchema = new mongoose.Schema({
         select: false,
         required: true,
     },
-})
+}, { timestamps: true })
 
 rideSchema.index({ captain: 1, status: 1 });
 

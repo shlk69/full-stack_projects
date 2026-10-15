@@ -17,15 +17,20 @@ import CaptainRiding from "./pages/CaptainRiding";
 
 import RideComplete from "./pages/RideComplete";
 
+import RideHistory from './pages/RideHistory';
+import AdminDashboard from './pages/AdminDashboard';
 const App = () => {
   return (
     <div>
       <Routes>
         <Route path="/" element={<Start />} />
+        <Route path="/ride-history" element={<UserProtectedWrapper><RideHistory /></UserProtectedWrapper>} />
+        <Route path="/captain-history" element={<CaptainProtectWrapper><RideHistory /></CaptainProtectWrapper>} />
+        <Route path="/admin" element={<UserProtectedWrapper><AdminDashboard /></UserProtectedWrapper>} />
         <Route path="/login" element={<UserLogin />} />
         <Route path="/ride-complete/:rideId" element={<UserProtectedWrapper><RideComplete /></UserProtectedWrapper>} />
-        <Route path="/riding" element={<Riding />} />
-        <Route path="/captain-riding" element={<CaptainRiding />} />
+        <Route path="/riding" element={<UserProtectedWrapper><Riding /></UserProtectedWrapper>} />
+        <Route path="/captain-riding" element={<CaptainProtectWrapper><CaptainRiding /></CaptainProtectWrapper>} />
 
         <Route path="/signup" element={<UserSignup />} />
         <Route path="/captain-login" element={<Captainlogin />} />

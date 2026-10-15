@@ -1,3 +1,4 @@
+const logger = require('../logger');
 const captainModel = require('../models/captain.model');
 const captainService = require('../services/captain.service');
 const blackListTokenModel = require('../models/blacklistToken.model');
@@ -77,13 +78,13 @@ module.exports.getDashboardStats = async (req, res) => {
         const stats = await captainService.getDashboardStats(req.captain);
         return res.status(200).json({ stats });
     } catch (error) {
-        console.error('Failed to load captain dashboard stats:', error);
+        logger.error('captain_dashboard_failed', error);
         return res.status(500).json({ message: 'Unable to load captain dashboard stats' });
     }
 }
 
 module.exports.logoutCaptain = async (req, res, next) => {
-    const token = req.cookies.token || req.headers.authorization?.split(' ')[ 1 ];
+    const token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
 
     await captainService.markCaptainOffline(req.captain._id, req.captain.socketId);
     await blackListTokenModel.create({ token });

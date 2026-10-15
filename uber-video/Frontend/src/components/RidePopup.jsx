@@ -22,9 +22,7 @@ const RidePopUp = (props) => {
             alt=""
           />
           <h2 className="text-lg font-medium">
-            {props.ride?.user.fullname.firstname +
-              " " +
-              props.ride?.user.fullname.lastname}
+            {[props.ride?.user?.fullname?.firstname, props.ride?.user?.fullname?.lastname].filter(Boolean).join(" ") || "Rider"}
           </h2>
         </div>
         <h5 className="text-lg font-semibold">{formattedDistance}</h5>
@@ -60,7 +58,6 @@ const RidePopUp = (props) => {
         <div className="mt-5 w-full ">
           <button
             onClick={() => {
-              props.setConfirmRidePopupPanel(true);
               props.confirmRide();
             }}
             className=" bg-green-600 w-full text-white font-semibold p-2 px-10 rounded-lg">

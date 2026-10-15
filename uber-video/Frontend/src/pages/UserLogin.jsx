@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config";
 import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -26,7 +27,7 @@ const UserLogin = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/users/login`,
+        `${API_BASE_URL}/users/login`,
         {
           email: email.trim(),
           password,
@@ -269,7 +270,7 @@ const UserLogin = () => {
                     </svg>
                   )}
 
-                  {loading ? "Signing in..." : "Login"}
+                  {loading ? "Signing in..." : "Sign in"}
                 </button>
               </form>
 

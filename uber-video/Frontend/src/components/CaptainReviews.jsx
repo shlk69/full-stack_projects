@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config";
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 const CaptainReviews = () => {
@@ -7,7 +8,7 @@ const CaptainReviews = () => {
     let active = true;
     const load = async () => {
       try {
-        const response = await axios.get(import.meta.env.VITE_BASE_URL + '/captains/reviews', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+        const response = await axios.get(API_BASE_URL + '/captains/reviews', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
         if (active) { setData(response.data); setError(''); }
       } catch { if (active) setError('Unable to load reviews.'); }
     };

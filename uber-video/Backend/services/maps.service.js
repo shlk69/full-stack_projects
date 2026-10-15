@@ -1,3 +1,4 @@
+const logger = require('../logger');
 const axios = require('axios');
 const captainModel = require('../models/captain.model');
 const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
@@ -111,10 +112,7 @@ module.exports.getAutoCompleteSuggestions = async (input) => {
 
         throw new Error("Unable to fetch suggestions");
     } catch (err) {
-        console.error(
-            "Mapbox autocomplete error:",
-            err.response?.data || err.message
-        );
+        logger.error('map_suggestions_failed', err);
         throw err;
     }
 };

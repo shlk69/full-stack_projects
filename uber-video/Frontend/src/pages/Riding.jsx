@@ -1,13 +1,15 @@
-import { Link, useLocation } from "react-router-dom"; 
+import { API_BASE_URL } from "../config";
+import { Link, useLocation } from "react-router-dom";
 import { useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import TripTools from "../components/TripTools";
 import LiveTracking from "../components/LiveTracking";
 import { SocketContext } from "../context/ContextDefinitions";
 
 const Riding = () => {
   const location = useLocation();
-  const { ride } = location.state || {}; 
+  const ride = location.state?.ride;
   const { socket } = useContext(SocketContext);
   const navigate = useNavigate();
 
@@ -19,7 +21,7 @@ const Riding = () => {
     };
     const check = async () => {
       try {
-        const { data } = await axios.get(import.meta.env.VITE_BASE_URL + '/rides/' + ride._id + '/status', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+        const { data } = await axios.get(API_BASE_URL + '/rides/' + ride._id + '/status', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
         if (active && data.status === 'completed') navigate('/ride-complete/' + ride._id);
       } catch { /* Retry on next poll during a temporary connection failure. */ }
     };
@@ -45,7 +47,8 @@ const Riding = () => {
       <div className="h-1/2">
         <LiveTracking ride={ride} />
       </div>
-      <div className="h-1/2 p-4">
+      <div className="h-1/2 p-4 overflow-y-auto">
+        <TripTools ride={ride} />
         <div className="flex items-center justify-between">
           <img
             className="h-12"

@@ -1,6 +1,8 @@
+import { API_BASE_URL } from "../config";
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
+import { downloadReceipt } from '../tripApi';
 let checkoutLoader;
 const loadCheckout = () => {
   if (window.Razorpay) return Promise.resolve();
@@ -21,7 +23,7 @@ const RideComplete = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const config = () => ({ headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
-  const base = import.meta.env.VITE_BASE_URL + '/rides/' + rideId;
+  const base = API_BASE_URL + '/rides/' + rideId;
   const message = err => err.response?.data?.message || err.message || 'Please try again.';
   useEffect(() => {
     const controller = new AbortController();
@@ -66,6 +68,7 @@ const RideComplete = () => {
         <button disabled={busy} onClick={() => refresh().catch(err => setError(message(err)))} className="w-full underline">Check payment status</button>
       </div> : <>
         <p role="status" className="mt-4 font-semibold text-green-700">Payment successful · ₹{ride.fare}</p>
+        <button className="mt-3 underline" onClick={() => downloadReceipt("user", rideId).catch(err => setError(message(err)))}>Download receipt</button>
         {ride.review?.createdAt ? <p className="mt-5">Thank you! Your {ride.review.rating}-star review has been saved.</p> : <form onSubmit={saveReview} className="mt-6">
           <h2 className="text-lg font-semibold">Rate your captain</h2>
           <div role="group" aria-label="Rating" className="my-3 flex gap-3">{[1,2,3,4,5].map(value => <button key={value} type="button" aria-label={value + ' stars'} aria-pressed={rating === value} onClick={() => setRating(value)} className={'text-3xl ' + (value <= rating ? 'text-yellow-500' : 'text-gray-300')}>★</button>)}</div>

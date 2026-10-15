@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -20,7 +21,7 @@ const UserProtectedWrapper = ({ children }) => {
     }
 
     axios
-      .get(`${import.meta.env.VITE_BASE_URL}/users/profile`, {
+      .get(`${API_BASE_URL}/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config";
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +17,7 @@ const FinishRide = (props) => {
     setBusy(true); setError("");
     try {
     const response = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/rides/end-ride`,
+      `${API_BASE_URL}/rides/end-ride`,
       {
         rideId: props.ride._id,
       },
@@ -50,7 +51,7 @@ const FinishRide = (props) => {
             alt=""
           />
           <h2 className="text-lg font-medium">
-            {props.ride?.user.fullname.firstname}
+            {props.ride?.user?.fullname?.firstname}
           </h2>
         </div>
         <h5 className="text-lg font-semibold">{formattedDistance}</h5>

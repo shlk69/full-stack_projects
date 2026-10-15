@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config";
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -6,7 +7,7 @@ const CompletedRides = () => {
   const [error, setError] = useState('');
   useEffect(() => {
     let active = true;
-    axios.get(import.meta.env.VITE_BASE_URL + '/rides/completed', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+    axios.get(API_BASE_URL + '/rides/completed', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
       .then(({ data }) => { if (active) setRides(data.rides); })
       .catch(() => { if (active) setError('Unable to load completed rides. Refresh to retry.'); });
     return () => { active = false; };

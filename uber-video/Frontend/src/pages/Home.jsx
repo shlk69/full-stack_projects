@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "remixicon/fonts/remixicon.css";
@@ -12,22 +13,26 @@ import { UserDataContext } from "../context/ContextDefinitions";
 import { useNavigate } from "react-router-dom";
 import LiveTracking from "../components/LiveTracking";
 
+import TripTools from "../components/TripTools";
+import { Link, useLocation } from "react-router-dom";
 import CompletedRides from "../components/CompletedRides";
 
 const Home = () => {
-  const [pickup, setPickup] = useState("");
-  const [destination, setDestination] = useState("");
+  const location = useLocation();
+  const resumeRide = location.state?.resumeRide;
+  const [pickup, setPickup] = useState(resumeRide?.pickup || "");
+  const [destination, setDestination] = useState(resumeRide?.destination || "");
   const [panelOpen, setPanelOpen] = useState(false);
   const [vehiclePanel, setVehiclePanel] = useState(false);
   const [confirmRidePanel, setConfirmRidePanel] = useState(false);
-  const [vehicleFound, setVehicleFound] = useState(false);
-  const [waitingForDriver, setWaitingForDriver] = useState(false);
+  const [vehicleFound, setVehicleFound] = useState(resumeRide?.status === 'pending');
+  const [waitingForDriver, setWaitingForDriver] = useState(resumeRide?.status === 'accepted');
   const [pickupSuggestions, setPickupSuggestions] = useState([]);
   const [destinationSuggestions, setDestinationSuggestions] = useState([]);
   const [activeField, setActiveField] = useState(null);
   const [fare, setFare] = useState({});
   const [vehicleType, setVehicleType] = useState(null);
-  const [ride, setRide] = useState(null);
+  const [ride, setRide] = useState(resumeRide || null);
   const [rideRequestError, setRideRequestError] = useState("");
 
   const navigate = useNavigate();
@@ -73,11 +78,12 @@ const Home = () => {
     };
   }, [navigate, socket, user?._id]);
 
+
   const handlePickupChange = async (e) => {
     setPickup(e.target.value);
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/maps/get-suggestions`,
+        `${API_BASE_URL}/maps/get-suggestions`,
         {
           params: { input: e.target.value },
           headers: {
@@ -95,7 +101,7 @@ const Home = () => {
     setDestination(e.target.value);
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/maps/get-suggestions`,
+        `${API_BASE_URL}/maps/get-suggestions`,
         {
           params: { input: e.target.value },
           headers: {
@@ -122,7 +128,7 @@ const Home = () => {
     if (pickup.trim().length < 3 || destination.trim().length < 3) return;
     setRideRequestError("");
     try {
-      const response = await axios.get(import.meta.env.VITE_BASE_URL + '/rides/get-fare', {
+      const response = await axios.get(API_BASE_URL + '/rides/get-fare', {
         params: { pickup, destination }, headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       });
       setPanelOpen(false); setFare(response.data.fare); setVehiclePanel(true);
@@ -136,7 +142,7 @@ const Home = () => {
 
     try {
     const response = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/rides/create`,
+      `${API_BASE_URL}/rides/create`,
       {
         pickup,
         destination,
@@ -148,6 +154,7 @@ const Home = () => {
         },
       },
     );
+    setRide(current => current?.status === "accepted" ? current : response.data.ride);
     if (response.data.notifiedCaptains === 0) {
       setVehicleFound(false);
       setRideRequestError(
@@ -176,6 +183,8 @@ const Home = () => {
       </div>
       <div className="absolute inset-x-0 bottom-0 z-20 max-h-[85dvh] overflow-y-auto bg-white sm:bottom-5 sm:left-5 sm:right-auto sm:w-[420px] sm:rounded-2xl sm:shadow-xl">
         <div className="p-5 bg-white relative">
+          {user?.isAdmin && <Link to="/admin" className="mb-3 block text-sm font-semibold underline">Admin dashboard</Link>}
+          <Link to="/ride-history" className="mb-3 block text-sm font-semibold underline">Ride history & receipts</Link>
           <CompletedRides />
           {rideRequestError && (
             <p role="alert" className="mb-2 text-sm text-red-600">
@@ -269,7 +278,9 @@ const Home = () => {
       <div
         hidden={!vehicleFound}
         className="fixed inset-x-0 max-h-[85dvh] overflow-y-auto w-full z-50 bottom-0 bg-white px-3 py-6 pt-12">
+        {vehicleFound && <TripTools ride={ride} onCancelled={({ reason }) => { setVehicleFound(false); setRide(null); setRideRequestError("Ride cancelled: " + reason); }} />}
         <LookingForDriver
+          ride={ride}
           createRide={createRide}
           pickup={pickup}
           destination={destination}
@@ -281,6 +292,7 @@ const Home = () => {
       <div
         hidden={!waitingForDriver}
         className="fixed inset-x-0 max-h-[85dvh] overflow-y-auto w-full z-60 bottom-0 bg-white px-3 py-6 pt-12">
+        {waitingForDriver && <TripTools ride={ride} onCancelled={({ reason }) => { setWaitingForDriver(false); setVehicleFound(false); setRide(null); setRideRequestError("Ride cancelled: " + reason); }} />}
         <WaitingForDriver
           ride={ride}
           setVehicleFound={setVehicleFound}

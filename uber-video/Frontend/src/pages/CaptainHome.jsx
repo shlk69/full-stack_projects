@@ -1,8 +1,7 @@
-import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { API_BASE_URL } from "../config";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import CaptainDetails from "../components/CaptainDetails";
-import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
 import ConfirmRidePopUp from "../components/ConfirmRidePopUp";
 import { useEffect, useContext } from "react";
 import { SocketContext } from "../context/ContextDefinitions";
@@ -12,12 +11,13 @@ import RidePopUp from "../components/RidePopUp";
 import LiveTracking from "../components/LiveTracking";
 
 const CaptainHome = () => {
+  const location = useLocation();
+  const resumeRide = location.state?.resumeRide;
   const [ridePopupPanel, setRidePopupPanel] = useState(false);
-  const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false);
+  const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(resumeRide?.status === 'accepted');
 
-  const ridePopupPanelRef = useRef(null);
-  const confirmRidePopupPanelRef = useRef(null);
-  const [ride, setRide] = useState(null);
+  const [ride, setRide] = useState(resumeRide || null);
+  const [rideError, setRideError] = useState("");
 
   const { socket } = useContext(SocketContext);
   const { captain } = useContext(CaptainDataContext);
@@ -48,10 +48,7 @@ const CaptainHome = () => {
           },
           (result) => {
             if (!result?.success) {
-              console.error(
-                "Captain socket registration failed:",
-                result?.message || "No registration response",
-              );
+              setRideError("Unable to connect to ride notifications. Please reconnect.");
             }
           },
         );
@@ -66,8 +63,8 @@ const CaptainHome = () => {
         ({ coords }) => {
           registerCaptain({ ltd: coords.latitude, lng: coords.longitude });
         },
-        (error) => {
-          console.error("Unable to register captain location:", error.message);
+        () => {
+          setRideError("Allow location access to receive nearby requests accurately.");
           registerCaptain();
         },
         { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
@@ -98,8 +95,10 @@ const CaptainHome = () => {
   }, [captain?._id, socket]);
 
   async function confirmRide() {
-    await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/rides/confirm`,
+    try {
+    if (!ride?._id || !captain?._id) throw new Error("Ride details are still loading");
+    const response = await axios.post(
+      `${API_BASE_URL}/rides/confirm`,
       {
         rideId: ride._id,
         captainId: captain._id,
@@ -111,39 +110,13 @@ const CaptainHome = () => {
       },
     );
 
+    setRide(response.data);
     setRidePopupPanel(false);
     setConfirmRidePopupPanel(true);
+    } catch (err) { setRideError(err.response?.data?.message || "Unable to accept this ride."); setRidePopupPanel(false); }
   }
 
-  useGSAP(
-    function () {
-      if (ridePopupPanel) {
-        gsap.to(ridePopupPanelRef.current, {
-          transform: "translateY(0)",
-        });
-      } else {
-        gsap.to(ridePopupPanelRef.current, {
-          transform: "translateY(100%)",
-        });
-      }
-    },
-    [ridePopupPanel],
-  );
 
-  useGSAP(
-    function () {
-      if (confirmRidePopupPanel) {
-        gsap.to(confirmRidePopupPanelRef.current, {
-          transform: "translateY(0)",
-        });
-      } else {
-        gsap.to(confirmRidePopupPanelRef.current, {
-          transform: "translateY(100%)",
-        });
-      }
-    },
-    [confirmRidePopupPanel],
-  );
 
   return (
     <div className="relative h-[100dvh] w-screen overflow-hidden">
@@ -163,11 +136,13 @@ const CaptainHome = () => {
         </Link>
       </div>
       <div className="absolute inset-x-0 bottom-0 z-20 max-h-[48dvh] overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:bottom-5 sm:left-5 sm:right-auto sm:w-[min(32rem,calc(100%-2.5rem))] sm:rounded-2xl sm:p-6">
+        <Link to="/captain-history" className="mb-3 block text-sm font-semibold underline">Ride history & receipts</Link>
+        {rideError && <p role="alert" className="text-red-700">{rideError}</p>}
         <CaptainDetails />
       </div>
       <div
-        ref={ridePopupPanelRef}
-        className="fixed z-40 bottom-0 w-full translate-y-full bg-white px-3 py-10 pt-12">
+        hidden={!ridePopupPanel}
+        className="fixed z-40 bottom-0 w-full bg-white px-3 py-10 pt-12">
         <RidePopUp
           ride={ride}
           setRidePopupPanel={setRidePopupPanel}
@@ -176,13 +151,13 @@ const CaptainHome = () => {
         />
       </div>
       <div
-        ref={confirmRidePopupPanelRef}
-        className="fixed z-50 bottom-0 h-screen w-full translate-y-full bg-white px-3 py-10 pt-12">
-        <ConfirmRidePopUp
+        hidden={!confirmRidePopupPanel}
+        className="fixed z-50 bottom-0 max-h-[90dvh] overflow-y-auto w-full bg-white px-3 py-10 pt-12">
+        {confirmRidePopupPanel && <ConfirmRidePopUp
           ride={ride}
           setConfirmRidePopupPanel={setConfirmRidePopupPanel}
           setRidePopupPanel={setRidePopupPanel}
-        />
+        />}
       </div>
     </div>
   );

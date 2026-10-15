@@ -1,8 +1,12 @@
+import { API_BASE_URL } from "../config";
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+import TripTools from "./TripTools";
+
 const ConfirmRidePopUp = (props) => {
+  const [error, setError] = useState("");
   const [otp, setOtp] = useState("");
   const navigate = useNavigate();
   const distanceKm = Number(props.ride?.distance) / 1000;
@@ -13,8 +17,10 @@ const ConfirmRidePopUp = (props) => {
   const submitHander = async (e) => {
     e.preventDefault();
 
+    setError("");
+    try {
     const response = await axios.get(
-      `${import.meta.env.VITE_BASE_URL}/rides/start-ride`,
+      `${API_BASE_URL}/rides/start-ride`,
       {
         params: {
           rideId: props.ride._id,
@@ -29,11 +35,14 @@ const ConfirmRidePopUp = (props) => {
     if (response.status === 200) {
       props.setConfirmRidePopupPanel(false);
       props.setRidePopupPanel(false);
-      navigate("/captain-riding", { state: { ride: props.ride } });
+      navigate("/captain-riding", { state: { ride: response.data } });
     }
+    } catch (err) { setError(err.response?.data?.message || "Unable to start ride."); }
   };
   return (
     <div>
+      {error && <p role="alert" className="text-red-700">{error}</p>}
+      <TripTools ride={props.ride} role="captain" onCancelled={() => { props.setConfirmRidePopupPanel(false); props.setRidePopupPanel(false); }} />
       <h5
         className="p-1 text-center w-[93%] absolute top-0"
         onClick={() => {
@@ -52,7 +61,7 @@ const ConfirmRidePopUp = (props) => {
             alt=""
           />
           <h2 className="text-lg font-medium capitalize">
-            {props.ride?.user.fullname.firstname}
+            {props.ride?.user?.fullname?.firstname || "Rider"}
           </h2>
         </div>
         <h5 className="text-lg font-semibold">{formattedDistance}</h5>
@@ -89,6 +98,10 @@ const ConfirmRidePopUp = (props) => {
         <div className="mt-6 w-full">
           <form onSubmit={submitHander}>
             <input
+              aria-label="Ride OTP"
+              required
+              pattern="[0-9]{6}"
+              maxLength={6}
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               type="text"
@@ -100,12 +113,13 @@ const ConfirmRidePopUp = (props) => {
               Confirm
             </button>
             <button
+              type="button"
               onClick={() => {
                 props.setConfirmRidePopupPanel(false);
                 props.setRidePopupPanel(false);
               }}
               className="w-full mt-2 bg-red-600 text-lg text-white font-semibold p-3 rounded-lg">
-              Cancel
+              Close panel
             </button>
           </form>
         </div>

@@ -2,5 +2,13 @@
   "dependencies": {
     "socket.io": "^4.8.4",
     "socket.io-client": "^4.8.4"
+  },
+  "private": true,
+  "scripts": {
+    "start": "npm start --prefix Backend",
+    "build": "npm run build --prefix Frontend",
+    "test": "npm test --prefix Backend",
+    "lint": "npm run lint --prefix Frontend",
+    "check:secrets": "node scripts/check-production.cjs"
   }
 }

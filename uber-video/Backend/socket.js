@@ -1,3 +1,4 @@
+const logger = require('./logger');
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
@@ -15,13 +16,12 @@ function initializeSocket(server) {
     });
 
     io.on('connection', (socket) => {
-        console.log(`Client connected: ${socket.id}`);
 
 
         socket.on('join', async (data, acknowledge) => {
             if (!data || !['user', 'captain'].includes(data.userType) ||
                 !mongoose.isValidObjectId(data.userId)) {
-                console.warn('Ignoring socket join with invalid user data.');
+
                 if (typeof acknowledge === 'function') {
                     acknowledge({ success: false, message: 'Invalid socket user data' });
                 }
@@ -35,7 +35,7 @@ function initializeSocket(server) {
                 if (String(identity._id) !== String(userId) || await blacklist.exists({ token: data.token })) throw new Error('Unauthorized socket');
                 const model = userType === 'user' ? userModel : captainModel;
                 if (!await model.exists({ _id: userId })) throw new Error('Identity not found');
-                socket.data.identity = { userId, userType };
+                socket.data.identity = { userId, userType, token: data.token };
                 if (userType === 'user') {
                     await userModel.findByIdAndUpdate(userId, { socketId: socket.id });
                 } else {
@@ -57,7 +57,7 @@ function initializeSocket(server) {
                     acknowledge({ success: true });
                 }
             } catch (error) {
-                console.error('Failed to register socket connection:', error);
+                logger.error('socket_registration_failed', error);
                 socket.emit('join-error', { message: 'Unable to register socket connection' });
                 if (typeof acknowledge === 'function') {
                     acknowledge({ success: false, message: 'Unable to register socket connection' });
@@ -77,7 +77,10 @@ function initializeSocket(server) {
                 return socket.emit('error', { message: 'Invalid location data' });
             }
 
-            try { await captainModel.findByIdAndUpdate(userId, {
+            try {
+                jwt.verify(socket.data.identity.token, process.env.JWT_SECRET);
+                if (await blacklist.exists({ token: socket.data.identity.token })) throw new Error('Unauthorized');
+                await captainModel.findByIdAndUpdate(userId, {
                 location: {
                     ltd: location.ltd,
                     lng: location.lng
@@ -120,11 +123,10 @@ function initializeSocket(server) {
         });
 
         socket.on('disconnect', async () => {
-            console.log(`Client disconnected: ${socket.id}`);
             try {
                 await captainService.markCaptainOfflineBySocket(socket.id);
             } catch (error) {
-                console.error('Failed to update captain online time:', error);
+                logger.error('captain_offline_update_failed', error);
             }
         });
     });
@@ -137,13 +139,13 @@ const sendMessageToSocketId = (socketId, messageObject) => {
     if (io) {
         io.to(socketId).emit(messageObject.event, messageObject.data);
     } else {
-        console.log('Socket.io not initialized.');
+        logger.warn('socket_not_initialized');
     }
 }
 
 const sendMessageToCaptains = async (captains, messageObject) => {
     if (!io) {
-        console.error('Cannot send captain notifications: Socket.io is not initialized.');
+        logger.error('captain_notification_unavailable');
         return 0;
     }
 
@@ -156,7 +158,7 @@ const sendMessageToCaptains = async (captains, messageObject) => {
                 .timeout(3000)
                 .emit(messageObject.event, messageObject.data, (error, responses) => {
                     if (error || !responses?.length) {
-                        console.warn(`Captain notification was not acknowledged: ${captain._id}`);
+
                         resolve(false);
                         return;
                     }

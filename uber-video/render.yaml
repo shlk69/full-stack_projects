@@ -2,9 +2,10 @@ services:
   - type: web
     name: uber-video
     runtime: node
+    rootDir: uber-video
     plan: free
     numInstances: 1
-    buildCommand: npm ci && npm ci --prefix Backend && npm ci --prefix Frontend && npm test --prefix Backend && npm run lint --prefix Frontend && npm run build --prefix Frontend
+    buildCommand: npm ci && npm ci --prefix Backend && npm ci --prefix Frontend && npm test --prefix Backend && npm run lint --prefix Frontend && npm run build --prefix Frontend && npm run check:secrets
     startCommand: cd Backend && npm start
     healthCheckPath: /health
     envVars:
@@ -13,6 +14,8 @@ services:
       - key: NODE_VERSION
         value: 22.22.0
       - key: DB_CONNECT
+        sync: false
+      - key: ADMIN_EMAILS
         sync: false
       - key: JWT_SECRET
         generateValue: true

@@ -66,13 +66,14 @@ module.exports.loginUser = async (req, res, next) => {
 
 module.exports.getUserProfile = async (req, res, next) => {
 
-    res.status(200).json(req.user);
+    const isAdmin = (process.env.ADMIN_EMAILS || '').split(',').map(value => value.trim().toLowerCase()).filter(Boolean).includes(req.user.email.toLowerCase());
+    res.status(200).json({ ...req.user.toObject(), isAdmin });
 
 }
 
 module.exports.logoutUser = async (req, res, next) => {
     res.clearCookie('token');
-    const token = req.cookies.token || req.headers.authorization.split(' ')[ 1 ];
+    const token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
 
     await blackListTokenModel.create({ token });
 

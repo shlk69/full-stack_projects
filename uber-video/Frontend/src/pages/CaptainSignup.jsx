@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -47,7 +48,7 @@ const CaptainSignup = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/captains/register`,
+        `${API_BASE_URL}/captains/register`,
         captainData,
       );
 

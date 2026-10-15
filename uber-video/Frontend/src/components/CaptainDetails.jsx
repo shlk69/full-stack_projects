@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config";
 import { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { CaptainDataContext } from "../context/ContextDefinitions";
@@ -16,7 +17,7 @@ const CaptainDetails = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}/captains/dashboard-stats`,
+          `${API_BASE_URL}/captains/dashboard-stats`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
