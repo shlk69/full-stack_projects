@@ -1,11 +1,13 @@
-import React from "react";
 import toast from "react-hot-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { loadRazorpay } from "../utils/razorpay";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 export const Billing = ({ user ,setUser }) => {
   const navigate = useNavigate();
+  const [paying, setPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
 
   useEffect(() => {
     if (user && !user.isSetupComplete) {
@@ -29,24 +31,27 @@ export const Billing = ({ user ,setUser }) => {
     : 0;
 
   const handlePay = async () => {
-    console.log("Inside payment");
+    if (paying) return;
+    setPaying(true); setPaymentError("");
     try {
+      await loadRazorpay();
       const res = await axios.post(
         import.meta.env.VITE_SERVER_URL + "/api/billing/order",
         { plan: "pro" },
         { withCredentials: true },
       );
 
-      const order = res.data.order;
+      const order = res.data.data.order;
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: res.data.data.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
         name: "VA Builder",
         description: "Pro Plan Subscription",
         order_id: order.id,
         handler: async (response) => {
+          try {
           const verifyRes = await axios.post(
             import.meta.env.VITE_SERVER_URL + "/api/billing/verify",
             response,
@@ -57,19 +62,23 @@ export const Billing = ({ user ,setUser }) => {
           if (verifyRes.data.success) {
             toast.success("Payment successfully");
 
-            setUser(verifyRes.data.user);
+            setUser(verifyRes.data.data.user);
           }
+          } catch (error) { const message = error.response?.data?.message || "Payment verification failed. Please retry."; setPaymentError(message); toast.error(message); }
+          finally { setPaying(false); }
         },
+        modal: { ondismiss: () => setPaying(false) },
         theme: {
           color: "#7c3aed",
         },
       };
 
       const razorpay = new window.Razorpay(options);
+      razorpay.on("payment.failed", () => { setPaymentError("Payment was declined or failed. You can retry in checkout or close it and try again."); });
       razorpay.open();
     } catch (error) {
-      toast.error("Payment failed");
-      console.error("Payment initiation failed:", error.message);
+      const message = error.response?.data?.message || error.message || "Payment could not start. Please retry.";
+      setPaymentError(message); toast.error(message); setPaying(false);
     }
   };
 
@@ -83,6 +92,8 @@ export const Billing = ({ user ,setUser }) => {
           </p>
         </div>
 
+        {paymentError && <p role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{paymentError}</p>}
+        {paying && <p role="status" className="mb-4">Processing payment. Please complete or close checkout.</p>}
         {/* Top Stat Metrics Row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
           <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
@@ -154,7 +165,7 @@ export const Billing = ({ user ,setUser }) => {
 
             <button
               onClick={handlePay}
-              disabled={user?.plan === "pro"}
+              disabled={paying || user?.plan === "pro"}
               className={`mt-8 h-14 w-full rounded-2xl font-semibold transition ${
                 user?.plan === "pro"
                   ? "bg-emerald-200 text-black cursor-default"

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import axios from "axios";
 import { Toaster } from "react-hot-toast";
@@ -9,68 +9,22 @@ import Builder from "./pages/Builder";
 import { Billing } from "./pages/Billing";
 
 import Navbar from "./components/Navbar";
-import ProtectedRoute from "./components/protectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const retryAttempted = useRef(false);
-
-  const fetchCurrentUser = async () => {
-    const token = localStorage.getItem("token");
-
-    if (!token || token === "null" || token === "undefined") {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_SERVER_URL}/api/user/current-user`,
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      console.log("Fetched User:", response.data.data);
-
-      setUser(response.data.data);
-    } catch (error) {
-      console.log("Current User API Failed");
-
-      console.log("Status:", error.response?.status);
-
-      console.log("Response:", error.response?.data);
-
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [loading, setLoading] = useState(() => Boolean(localStorage.getItem("token") && !["null", "undefined"].includes(localStorage.getItem("token"))));
 
   useEffect(() => {
-    fetchCurrentUser();
+    const token = localStorage.getItem('token');
+    if (!token || token === 'null' || token === 'undefined') return;
+    const controller = new AbortController();
+    axios.get(import.meta.env.VITE_SERVER_URL + '/api/user/current-user', { withCredentials: true, signal: controller.signal, headers: { Authorization: 'Bearer ' + token } })
+      .then(({ data }) => setUser(data.data))
+      .catch(error => { if (error.code !== 'ERR_CANCELED') { setUser(null); if (error.response?.status === 401) localStorage.removeItem('token'); } })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, []);
-
-  useEffect(() => {
-    if (!loading && !user && !retryAttempted.current) {
-      retryAttempted.current = true;
-
-      fetchCurrentUser();
-    }
-  }, [loading, user]);
-
-  useEffect(() => {
-    console.log("===============");
-    console.log("USER STATE UPDATED");
-    console.log(user);
-    console.log("===============");
-  }, [user]);
 
   return (
     <>
@@ -90,7 +44,7 @@ const App = () => {
 
                 <Route
                   path="/builder"
-                  element={<Builder user={user} setUser={setUser} />}
+                  element={<Builder key={user?._id} user={user} setUser={setUser} />}
                 />
 
                 <Route

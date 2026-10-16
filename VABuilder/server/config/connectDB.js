@@ -7,6 +7,7 @@ const connection = async () => {
             retryWrites: true,
             w: "majority",
             connectTimeoutMS: 10000,
+            serverSelectionTimeoutMS: 10000,
             socketTimeoutMS: 45000,
         })
         logger.info('✅ MongoDB connected successfully')
@@ -14,7 +15,7 @@ const connection = async () => {
         return conn
     } catch (error) {
         logger.error(`❌ MongoDB connection failed: ${error.message}`)
-        process.exit(1)
+        throw error
     }
 }
 

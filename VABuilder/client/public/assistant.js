@@ -3,8 +3,10 @@
     let inactivityTimer = null;
     let manualStop = false;
     const INACTIVITY_TIMEOUT = 20000;
-    const CLIENT_URL = "http://localhost:5173";
-    const SERVER_URL = "http://localhost:8000";
+    const embedScript = document.currentScript;
+    if (!embedScript?.dataset?.userId) return;
+    const CLIENT_URL = new URL(embedScript.src).origin;
+    const SERVER_URL = embedScript.dataset.serverUrl || (CLIENT_URL.includes('localhost') ? 'http://localhost:8000' : CLIENT_URL);
     const theme = 'neon';
 
     const script = document.currentScript;
@@ -68,7 +70,7 @@
             const res = await fetch(`${SERVER_URL}/api/assistant/config/${userId}`);
             const data = await res.json();
             if (data) {
-                assistantConfig = data.user;
+                assistantConfig = data.data;
                 applyConfig();
             }
         } catch (error) {
@@ -80,11 +82,8 @@
         if (!assistantConfig) return;
         popup.className = `va-popup theme-${assistantConfig.theme}`;
         button.className = `va-btn theme-${assistantConfig.theme}`;
-        popup.querySelector('.va-title').innerHTML = `Hello! I'm ${assistantConfig.assistantName}`;
-        popup.querySelector('.va-sub').innerHTML = `
-            Welcome to ${assistantConfig?.businessName || 'our business'}.<br />
-            Ask anything about your website.
-        `;
+        popup.querySelector('.va-title').textContent = `Hello! I'm ${assistantConfig.assistantName}`;
+        popup.querySelector('.va-sub').textContent = 'Welcome to ' + (assistantConfig.buisnessName || 'our business') + '. Ask anything about your website.';
     };
 
     loadAssistant();
@@ -220,13 +219,14 @@
                     const data = await res.json();
 
                     if (data.success) {
-                        if (data.action === "navigate") {
-                            speak(data.response, () => {
-                                window.location.href = data.path;
+                        const reply = data.data;
+                        if (reply.action === "navigate") {
+                            speak(reply.response, () => {
+                                window.location.href = reply.path;
                             });
                         } else {
                             // After AI speaks, automatically resume listening
-                            speak(data.aiResponse, () => {
+                            speak(reply.aiResponse || reply.response || "No response available.", () => {
                                 status.innerText = "Tap mic to Speak";
                                 wave.style.opacity = "0";
                                 resumeListening();   // ← keep session alive ✓

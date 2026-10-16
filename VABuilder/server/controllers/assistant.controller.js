@@ -6,7 +6,7 @@ import logger from '../utils/logger.js'
 
 export const getAssistantConfig = catchAsync(async (req, res) => {
     const { userId } = req.params
-    const user = await User.findById(userId).select('-geminiApiKey')
+    const user = await User.findById(userId).select('assistantName buisnessName buisnessType buisnessDescription tone theme enableVoice enableNavigation pages isSetupComplete')
 
     if (!user) {
         return errorResponse(res, 'User not found', null, 404)
@@ -18,7 +18,7 @@ export const getAssistantConfig = catchAsync(async (req, res) => {
 export const askAssistant = catchAsync(async (req, res) => {
     const { message, userId } = req.body
 
-    if (!message || !userId) {
+    if (typeof message !== 'string' || !message.trim() || message.length > 4000 || !userId) {
         return errorResponse(res, 'Message and UserId are required', null, 400)
     }
 
@@ -28,7 +28,7 @@ export const askAssistant = catchAsync(async (req, res) => {
         return errorResponse(res, 'User not found', null, 404)
     }
 
-    if (!user.geminiApiKey) {
+    if (!user.geminiApiKey && !process.env.GEMINI_API_KEY) {
         return errorResponse(res, 'Gemini API key is not configured', null, 404)
     }
 

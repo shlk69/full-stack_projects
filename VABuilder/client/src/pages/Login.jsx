@@ -1,4 +1,3 @@
-import React from "react";
 import { HiOutlineMicrophone, HiOutlineSparkles } from "react-icons/hi";
 import { HiCodeBracketSquare, HiOutlineBolt } from "react-icons/hi2";
 import { FcGoogle } from "react-icons/fc";
@@ -37,13 +36,12 @@ const Login = ({ setUser }) => {
   const handleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
-      const { displayName, email } = result.user;
+      const idToken = await result.user.getIdToken();
 
       const response = await axios.post(
         `${import.meta.env.VITE_SERVER_URL}/api/auth/google`,
         {
-          name: displayName,
-          email,
+          idToken,
         },
         { withCredentials: true },
       );
@@ -57,7 +55,7 @@ const Login = ({ setUser }) => {
         navigate("/");
       }, 300);
     } catch (error) {
-      toast.error("Login failed");
+      toast.error(error.response?.data?.message || "Login failed. Please retry.");
       console.log(error.message);
     }
   };

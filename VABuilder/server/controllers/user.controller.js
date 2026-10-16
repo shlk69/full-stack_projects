@@ -8,7 +8,10 @@ export const getCurrentUser = catchAsync(async (req, res) => {
     if (!user) {
         return errorResponse(res, 'User not found', null, 404)
     }
-    return successResponse(res, user, 'Current user fetched', 200)
+    const safeUser = user.toObject();
+    safeUser.hasGeminiApiKey = Boolean(safeUser.geminiApiKey);
+    delete safeUser.geminiApiKey;
+    return successResponse(res, safeUser, 'Current user fetched', 200)
 })
 
 export const saveAssistant = catchAsync(async (req, res) => {
@@ -28,6 +31,8 @@ export const saveAssistant = catchAsync(async (req, res) => {
         return errorResponse(res, 'User not found', null, 404)
     }
 
+    if (typeof assistantName !== 'string' || !assistantName.trim() || typeof buisnessName !== 'string' || !buisnessName.trim() || typeof buisnessType !== 'string' || !buisnessType.trim()) return errorResponse(res, 'Assistant name, business name and type are required', null, 400);
+    if (!Array.isArray(pages || []) || (pages || []).some(page => typeof page.path !== 'string' || !page.path.startsWith('/') || page.path.startsWith('//') || typeof page.name !== 'string' || !Array.isArray(page.keywords))) return errorResponse(res, 'Pages must use relative paths and keyword arrays', null, 400);
     user.assistantName = assistantName
     user.buisnessName = buisnessName
     user.buisnessType = buisnessType
@@ -46,5 +51,8 @@ export const saveAssistant = catchAsync(async (req, res) => {
     await user.save()
     logger.info(`Assistant saved for user: ${user._id}`)
 
-    return successResponse(res, user, 'Assistant saved successfully', 200)
+    const safeUser = user.toObject();
+    safeUser.hasGeminiApiKey = Boolean(safeUser.geminiApiKey);
+    delete safeUser.geminiApiKey;
+    return successResponse(res, safeUser, 'Assistant saved successfully', 200)
 })

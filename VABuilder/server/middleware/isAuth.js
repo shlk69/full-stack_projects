@@ -3,7 +3,7 @@ import logger from '../utils/logger.js'
 
 export const isAuth = async (req, res, next) => {
     try {
-        let token = req.cookies?.token
+        let token = req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : req.cookies?.token
 
         if (!token && req.headers.authorization?.startsWith('Bearer ')) {
             token = req.headers.authorization.split(' ')[1]

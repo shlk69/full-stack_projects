@@ -6,7 +6,7 @@ const pageSchema = new mongoose.Schema({
     name: String,
     path: String,
     keywords: {
-        type: ['String'],
+        type: [String],
         default:[]
     }
 }, {
@@ -67,7 +67,7 @@ const userSchema = new mongoose.Schema({
     },
     geminiStatus: {
         type: String,
-        enum: ['active', 'qouta_exceeded', 'invalid'],
+        enum: ['active', 'quota_exceeded', 'qouta_exceeded', 'invalid'],
         default:'active'
     },
     totalMessages: {

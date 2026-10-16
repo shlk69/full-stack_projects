@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { FiCopy, FiPlus, FiTrash2,FiCheck } from "react-icons/fi";
 import axios from "axios";
@@ -9,14 +9,14 @@ const Builder = ({ user, setUser }) => {
 
   const [editAssistant, setEditAssistant] = useState(!user?.isSetupComplete);
 
-  const [assistantName, setAssistantName] = useState("");
-  const [buisnessName, setBuisnessName] = useState("");
-  const [buisnessType, setBuisnessType] = useState("");
-  const [buisnessDescription, setBuisnessDescription] = useState("");
-  const [theme, setTheme] = useState("dark");
-  const [tone, setTone] = useState("friendly");
+  const [assistantName, setAssistantName] = useState(user?.assistantName || "");
+  const [buisnessName, setBuisnessName] = useState(user?.buisnessName || "");
+  const [buisnessType, setBuisnessType] = useState(user?.buisnessType || "");
+  const [buisnessDescription, setBuisnessDescription] = useState(user?.buisnessDescription || "");
+  const [theme, setTheme] = useState(user?.theme || "dark");
+  const [tone, setTone] = useState(user?.tone || "friendly");
   const [geminiApiKey, setGeminiApiKey] = useState("");
-  const [pages, setPages] = useState([]);
+  const [pages, setPages] = useState(user?.pages || []);
 
   const [pageName, setPageName] = useState("");
   const [pagePath, setPagePath] = useState("");
@@ -26,18 +26,6 @@ const Builder = ({ user, setUser }) => {
   const [copied, setCopied] = useState(false);
 
 
-  useEffect(() => {
-    if (user) {
-      setAssistantName(user?.assistantName || "");
-      setBuisnessName(user?.buisnessName || "");
-      setBuisnessType(user?.buisnessType || "");
-      setBuisnessDescription(user?.buisnessDescription || "");
-      setTheme(user?.theme || "dark");
-      setTone(user?.tone || "friendly");
-      setGeminiApiKey(user?.geminiApiKey || "");
-      setPages(user?.pages || []);
-    }
-  }, [user]);
 
   const addPages = () => {
     if (!pageName || !pagePath) {
@@ -106,7 +94,7 @@ const Builder = ({ user, setUser }) => {
     }
   };
 
-  const embedCode = `<script src="${import.meta.env.VITE_CLIENT_URL}/assistant.js" data-user-id="${user?._id}"></script>`;
+  const embedCode = `<script src="${import.meta.env.VITE_CLIENT_URL}/assistant.js" data-user-id="${user?._id}" data-server-url="${import.meta.env.VITE_SERVER_URL}"></script>`;
 
 
 
@@ -202,7 +190,7 @@ const Builder = ({ user, setUser }) => {
 
   Your Website Content
 
-  <script src="${import.meta.env.VITE_CLIENT_URL}/assistant.js" data-user-id="${user?._id}"></script>
+  <script src="${import.meta.env.VITE_CLIENT_URL}/assistant.js" data-user-id="${user?._id}" data-server-url="${import.meta.env.VITE_SERVER_URL}"></script>
 
 </body>`}
                 </pre>
@@ -227,7 +215,7 @@ const Builder = ({ user, setUser }) => {
 
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
-                  } catch (error) {
+                  } catch {
                     toast.error("Failed to copy");
                   }
                 }}
@@ -461,7 +449,7 @@ const Builder = ({ user, setUser }) => {
               !buisnessName||
               !buisnessType||
               !buisnessDescription||
-              !geminiApiKey}
+              (!geminiApiKey && !user?.hasGeminiApiKey)}
               className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-500 to-emerald-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:opacity-50">
               {loading
                 ? "Saving..."

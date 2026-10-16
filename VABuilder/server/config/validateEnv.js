@@ -2,6 +2,7 @@ const requiredEnvs = [
     'PORT',
     'MONGODB_URL',
     'JWT_SECRET',
+    'FIREBASE_PROJECT_ID',
     'DOMAIN_URL',
     'GEMINI_URL',
     'GEMINI_API_KEY',

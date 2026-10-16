@@ -1,3 +1,4 @@
+import { verifyGoogleIdentity } from '../config/firebase.js';
 import { genToken } from '../config/token.js'
 import { User } from '../models/user.model.js'
 import { catchAsync } from '../utils/catchAsync.js'
@@ -5,11 +6,11 @@ import { successResponse, errorResponse } from '../utils/ApiResponse.js'
 import logger from '../utils/logger.js'
 
 export const googleAuth = catchAsync(async (req, res) => {
-    const { name, email } = req.body
-
-    if (!name || !email) {
-        return errorResponse(res, 'Name and email are required', null, 400)
-    }
+    let identity;
+    try { identity = await verifyGoogleIdentity(req.body.idToken); }
+    catch { return errorResponse(res, 'Google sign-in could not be verified. Please sign in again.', null, 401); }
+    const email = identity.email.toLowerCase();
+    const name = identity.name || email.split('@')[0];
 
     let user = await User.findOne({ email })
     if (!user) {
