@@ -97,9 +97,6 @@ export const generateGeminiResponse = async ({
 
             case 503:
                 if (retries > 0) {
-                    console.warn(
-                        `Gemini overloaded. Retrying... (${retries} attempts left)`
-                    );
 
                     await sleep((4 - retries) * 1000);
 
@@ -125,7 +122,6 @@ export const generateGeminiResponse = async ({
             throw new Error("Gemini request timed out.");
         }
 
-        console.error("Gemini Fetch Error:", error.message);
 
         throw error;
     }

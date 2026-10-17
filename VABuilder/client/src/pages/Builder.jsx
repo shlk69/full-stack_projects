@@ -1,3 +1,4 @@
+import { SERVER_URL, CLIENT_URL } from "../config";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { FiCopy, FiPlus, FiTrash2,FiCheck } from "react-icons/fi";
@@ -70,7 +71,7 @@ const Builder = ({ user, setUser }) => {
       };
 
       const res = await axios.post(
-        `${import.meta.env.VITE_SERVER_URL}/api/user/save-assistant`,
+        `${SERVER_URL}/api/user/save-assistant`,
         data,
         {
           withCredentials: true,
@@ -78,23 +79,20 @@ const Builder = ({ user, setUser }) => {
       );
 
       setUser(res.data.data);
-      console.log("Updated user:", res.data.data);
+
       setEditAssistant(false);
 
       toast.success("Assistant saved successfully");
     } catch (error) {
-      console.log(
-        "Error while assistant creation:",
-        error?.response?.data || error.message,
-      );
 
-      toast.error("Failed to save assistant");
+
+      toast.error(error.response?.data?.message || "Failed to save assistant");
     } finally {
       setLoading(false);
     }
   };
 
-  const embedCode = `<script src="${import.meta.env.VITE_CLIENT_URL}/assistant.js" data-user-id="${user?._id}" data-server-url="${import.meta.env.VITE_SERVER_URL}"></script>`;
+  const embedCode = `<script src="${CLIENT_URL}/assistant.js" data-user-id="${user?._id}" data-server-url="${SERVER_URL}"></script>`;
 
 
 
@@ -190,7 +188,7 @@ const Builder = ({ user, setUser }) => {
 
   Your Website Content
 
-  <script src="${import.meta.env.VITE_CLIENT_URL}/assistant.js" data-user-id="${user?._id}" data-server-url="${import.meta.env.VITE_SERVER_URL}"></script>
+  <script src="${CLIENT_URL}/assistant.js" data-user-id="${user?._id}" data-server-url="${SERVER_URL}"></script>
 
 </body>`}
                 </pre>

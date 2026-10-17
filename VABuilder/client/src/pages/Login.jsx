@@ -1,3 +1,4 @@
+import { SERVER_URL } from "../config";
 import { HiOutlineMicrophone, HiOutlineSparkles } from "react-icons/hi";
 import { HiCodeBracketSquare, HiOutlineBolt } from "react-icons/hi2";
 import { FcGoogle } from "react-icons/fc";
@@ -39,7 +40,7 @@ const Login = ({ setUser }) => {
       const idToken = await result.user.getIdToken();
 
       const response = await axios.post(
-        `${import.meta.env.VITE_SERVER_URL}/api/auth/google`,
+        `${SERVER_URL}/api/auth/google`,
         {
           idToken,
         },
@@ -56,7 +57,7 @@ const Login = ({ setUser }) => {
       }, 300);
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed. Please retry.");
-      console.log(error.message);
+
     }
   };
   return (

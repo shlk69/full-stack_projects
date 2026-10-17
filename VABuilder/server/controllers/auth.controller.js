@@ -3,7 +3,6 @@ import { genToken } from '../config/token.js'
 import { User } from '../models/user.model.js'
 import { catchAsync } from '../utils/catchAsync.js'
 import { successResponse, errorResponse } from '../utils/ApiResponse.js'
-import logger from '../utils/logger.js'
 
 export const googleAuth = catchAsync(async (req, res) => {
     let identity;
@@ -19,7 +18,7 @@ export const googleAuth = catchAsync(async (req, res) => {
             email,
             plan: "free"
         })
-        logger.info(`New user created: ${email}`)
+
     }
 
     const token = await genToken(user._id)

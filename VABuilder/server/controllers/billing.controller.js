@@ -32,7 +32,6 @@ export const createOrder = catchAsync(async (req, res) => {
         orderId: order.id
     })
 
-    logger.info(`Order created: ${order.id} for user: ${userId}`)
     return successResponse(res, { order, keyId: process.env.RAZORPAY_KEY_ID }, 'Order created successfully', 200)
 })
 
@@ -52,7 +51,7 @@ export const verifyBilling = catchAsync(async (req, res) => {
         .digest("hex")
 
     if (!/^[a-f0-9]{64}$/i.test(razorpay_signature) || !crypto.timingSafeEqual(Buffer.from(sign, 'hex'), Buffer.from(razorpay_signature, 'hex'))) {
-        logger.warn(`Payment verification failed for order: ${razorpay_order_id}`)
+        logger.warn('Payment signature verification failed')
         return errorResponse(res, 'Payment verification failed', null, 400)
     }
 
@@ -79,6 +78,6 @@ export const verifyBilling = catchAsync(async (req, res) => {
     )
 
     user.geminiApiKey = undefined;
-    logger.info(`Payment verified and pro plan activated for user: ${userId}`)
+
     return successResponse(res, { user }, 'Payment verified successfully', 200)
 })

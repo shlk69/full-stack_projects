@@ -10,11 +10,11 @@ const connection = async () => {
             serverSelectionTimeoutMS: 10000,
             socketTimeoutMS: 45000,
         })
-        logger.info('✅ MongoDB connected successfully')
-        logger.info(`📍 Database: ${conn.connection.name}`)
+
+
         return conn
     } catch (error) {
-        logger.error(`❌ MongoDB connection failed: ${error.message}`)
+        logger.error('MongoDB connection failed')
         throw error
     }
 }
@@ -24,8 +24,8 @@ mongoose.connection.on('disconnected', () => {
     logger.warn('⚠️ MongoDB disconnected')
 })
 
-mongoose.connection.on('error', (err) => {
-    logger.error(`❌ MongoDB error: ${err.message}`)
+mongoose.connection.on('error', () => {
+    logger.error('MongoDB connection error')
 })
 
 export { connection }

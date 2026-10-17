@@ -1,3 +1,4 @@
+import { SERVER_URL } from "../config";
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { loadRazorpay } from "../utils/razorpay";
@@ -36,7 +37,7 @@ export const Billing = ({ user ,setUser }) => {
     try {
       await loadRazorpay();
       const res = await axios.post(
-        import.meta.env.VITE_SERVER_URL + "/api/billing/order",
+        SERVER_URL + "/api/billing/order",
         { plan: "pro" },
         { withCredentials: true },
       );
@@ -53,7 +54,7 @@ export const Billing = ({ user ,setUser }) => {
         handler: async (response) => {
           try {
           const verifyRes = await axios.post(
-            import.meta.env.VITE_SERVER_URL + "/api/billing/verify",
+            SERVER_URL + "/api/billing/verify",
             response,
             { withCredentials: true },
           );

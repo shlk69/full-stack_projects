@@ -1,7 +1,6 @@
 import { User } from "../models/user.model.js"
 import { catchAsync } from '../utils/catchAsync.js'
 import { successResponse, errorResponse } from '../utils/ApiResponse.js'
-import logger from '../utils/logger.js'
 
 export const getCurrentUser = catchAsync(async (req, res) => {
     const user = await User.findById(req.userId)
@@ -49,7 +48,6 @@ export const saveAssistant = catchAsync(async (req, res) => {
     user.isSetupComplete = true
 
     await user.save()
-    logger.info(`Assistant saved for user: ${user._id}`)
 
     const safeUser = user.toObject();
     safeUser.hasGeminiApiKey = Boolean(safeUser.geminiApiKey);

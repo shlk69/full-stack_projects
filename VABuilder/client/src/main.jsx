@@ -1,3 +1,4 @@
+import { SERVER_URL } from "./config";
 import axios from "axios";
 import { createRoot } from 'react-dom/client'
 import './index.css'
@@ -6,8 +7,8 @@ import { BrowserRouter } from 'react-router-dom'
 
 axios.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
-  const base = import.meta.env.VITE_SERVER_URL;
-  if (token && base && config.url?.startsWith(base)) config.headers.Authorization = 'Bearer ' + token;
+  const base = SERVER_URL;
+  if (token && !['null', 'undefined'].includes(token) && new URL(config.url || '/', window.location.origin).origin === new URL(base).origin) config.headers.Authorization = 'Bearer ' + token;
   return config;
 });
 

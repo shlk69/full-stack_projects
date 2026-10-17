@@ -2,7 +2,6 @@ import { generateGeminiResponse } from "../config/gemini.js"
 import { User } from "../models/user.model.js"
 import { catchAsync } from '../utils/catchAsync.js'
 import { successResponse, errorResponse } from '../utils/ApiResponse.js'
-import logger from '../utils/logger.js'
 
 export const getAssistantConfig = catchAsync(async (req, res) => {
     const { userId } = req.params
@@ -102,7 +101,7 @@ User Question: ${message}
     if (user.plan === "free") {
         user.totalMessages += 1
         await user.save()
-        logger.info(`Free user message count: ${user.totalMessages}`)
+
     }
 
     return successResponse(res, { aiResponse }, 'Assistant response generated', 200)

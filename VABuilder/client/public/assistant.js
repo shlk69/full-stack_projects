@@ -73,8 +73,8 @@
                 assistantConfig = data.data;
                 applyConfig();
             }
-        } catch (error) {
-            console.log('frontend error config:', error.message);
+        } catch {
+            status.innerText = "Assistant could not load. Please try again later.";
         }
     };
 
@@ -131,9 +131,9 @@
     const safeStart = () => {
         try {
             recognition.start();
-        } catch (err) {
+        } catch {
             // Ignore "already started" errors that browsers sometimes throw
-            console.warn("recognition.start() error (ignored):", err.message);
+
         }
     };
 
@@ -238,8 +238,8 @@
                             wave.style.opacity = "0";
                         });
                     }
-                } catch (error) {
-                    console.log('Server error:', error.message);
+                } catch {
+
                     status.innerText = "Tap mic to Speak";
                     wave.style.opacity = "0";
                 }
@@ -262,11 +262,11 @@
         safeStart();
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = () => {
         clearTimeout(inactivityTimer);
         isListening = false;
         manualStop = false;
-        console.error("Speech Recognition Error:", event.error);
+
         status.innerText = "Tap button to Speak";
         wave.style.opacity = "0";
     };

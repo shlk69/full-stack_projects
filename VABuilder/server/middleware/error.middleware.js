@@ -26,7 +26,7 @@ const errorMiddleware = (err, req, res, next) => {
 
     res.status(statusCode).json({
         success: false,
-        message,
+        message: process.env.NODE_ENV === "production" && statusCode >= 500 ? "Service temporarily unavailable. Please retry." : message,
         stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
     });
 };

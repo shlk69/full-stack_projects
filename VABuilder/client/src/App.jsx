@@ -1,3 +1,4 @@
+import { SERVER_URL } from "./config";
 import { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import axios from "axios";
@@ -19,7 +20,7 @@ const App = () => {
     const token = localStorage.getItem('token');
     if (!token || token === 'null' || token === 'undefined') return;
     const controller = new AbortController();
-    axios.get(import.meta.env.VITE_SERVER_URL + '/api/user/current-user', { withCredentials: true, signal: controller.signal, headers: { Authorization: 'Bearer ' + token } })
+    axios.get(SERVER_URL + '/api/user/current-user', { withCredentials: true, signal: controller.signal, headers: { Authorization: 'Bearer ' + token } })
       .then(({ data }) => setUser(data.data))
       .catch(error => { if (error.code !== 'ERR_CANCELED') { setUser(null); if (error.response?.status === 401) localStorage.removeItem('token'); } })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });

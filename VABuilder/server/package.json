@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon index.js",
+    "dev": "node --watch index.js",
     "start": "node index.js",
     "prod": "dotenv -v NODE_ENV=production -- node index.js",
     "test": "node --test tests/*.test.js"
@@ -16,18 +16,16 @@
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
-    "crypto": "^1.0.1",
     "dotenv": "^17.4.2",
-    "dotenv-cli": "^11.0.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "express-validator": "^7.3.2",
     "helmet": "^8.2.0",
-    "joi": "^18.2.3",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.6.2",
-    "morgan": "^1.11.0",
-    "nodemon": "^3.1.14",
     "razorpay": "^2.9.6"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^11.0.0"
   }
 }

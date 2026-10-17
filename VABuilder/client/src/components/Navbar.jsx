@@ -1,3 +1,4 @@
+import { SERVER_URL } from "../config";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/newlogo.png";
@@ -12,7 +13,7 @@ const Navbar = ({ user, setUser }) => {
   const handleLogout = async () => {
     try {
       await axios.post(
-        `${import.meta.env.VITE_SERVER_URL}/api/auth/logout`,
+        `${SERVER_URL}/api/auth/logout`,
         {},
         { withCredentials: true },
       );
@@ -20,9 +21,9 @@ const Navbar = ({ user, setUser }) => {
       setUser(null);
       navigator("/login");
       toast.success("Logged out successfully");
-    } catch (error) {
+    } catch {
       toast.error("Logout failed");
-      console.log(error.message);
+
     }
   };
 
