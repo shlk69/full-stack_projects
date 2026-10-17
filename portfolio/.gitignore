@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Quarantined configuration; never execute or publish
+.quarantine/

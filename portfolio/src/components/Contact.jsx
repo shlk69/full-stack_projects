@@ -30,6 +30,7 @@ export default function Contact({ onEmailClick, onCallClick }) {
             >
               GitHub
             </a>
+            <a className="button ghost" href="https://www.linkedin.com/in/sahil-kurmi-15b04b2b2/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
           </div>
         </div>
       </div>

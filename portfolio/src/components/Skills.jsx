@@ -17,8 +17,8 @@ export default function Skills() {
             <h3>Stack</h3>
             <div className="skill-matrix">
               {[
-                { label: 'Languages',  value: 'JavaScript ES2022+, TypeScript' },
-                { label: 'Frontend',   value: 'React.js, Next.js, HTML5, CSS3, Tailwind CSS' },
+                { label: 'Languages',  value: 'JavaScript ES2022+' },
+                { label: 'Frontend',   value: 'React.js, HTML5, CSS3, Tailwind CSS' },
                 { label: 'Backend',    value: 'Node.js, Express.js, REST API design, Socket.io, WebRTC' },
                 { label: 'Databases',  value: 'MongoDB, MySQL, Mongoose ODM, MySQL Workbench' },
                 { label: 'Security',   value: 'JWT, RBAC, rate limiting, OAuth concepts' },
@@ -37,9 +37,9 @@ export default function Skills() {
             <div className="signal-board">
               {[
                 { abbr: 'API', desc: 'REST architecture, auth boundaries, rate limits, tenant-aware services.' },
-                { abbr: 'RTC', desc: 'Socket-powered messaging, WebRTC video calls, screen sharing, presence.' },
-                { abbr: 'UI',  desc: 'Responsive product screens, admin dashboards, chat and video workflows.' },
-                { abbr: 'DSA', desc: '100+ LeetCode problems across arrays, trees, DP, linked lists, and graphs.' },
+                { abbr: 'LIVE', desc: 'Socket.IO ride events, live location updates, route maps, and in-app chat.' },
+                { abbr: 'UI',  desc: 'Responsive interfaces, rider and captain dashboards, assistant configuration, and checkout.' },
+                { abbr: 'DSA', desc: '150+ LeetCode questions solved, strengthening problem-solving and coding skills.' },
               ].map(({ abbr, desc }) => (
                 <div className="signal tilt" key={abbr}>
                   <b>{abbr}</b>

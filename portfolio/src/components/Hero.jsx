@@ -12,8 +12,8 @@ export default function Hero({ onEmailClick }) {
           </p>
           <h1>Sahil Kurmi (SHL) builds real-time web systems.</h1>
           <p className="hero-copy">
-            MERN, Next.js, TypeScript, REST APIs, WebRTC, Socket.io, JWT, RBAC, and scalable SaaS architecture.
-            I turn product ideas into fast, secure, production-ready interfaces and backends.
+            MERN, REST APIs, Socket.IO, Gemini AI, Google authentication, and payment integrations.
+            I build web apps from interface to backend, including an AI assistant platform and a real-time ride-hailing app.
           </p>
           <div className="hero-actions">
             <button className="button primary" onClick={onEmailClick}>Hire Me</button>

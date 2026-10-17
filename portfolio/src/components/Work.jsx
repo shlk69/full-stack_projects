@@ -1,3 +1,32 @@
+const projects = [
+  {
+    name: 'VA Builder',
+    description: 'An embeddable AI voice assistant for business websites.',
+    demo: 'https://va-builder.onrender.com/',
+    source: 'https://github.com/shlk69/full-stack_projects/tree/main/VABuilder',
+    points: [
+      'Embed a customizable assistant with one script tag, with separate business branding, themes, tone, and page configuration.',
+      'Use Gemini-powered conversations, browser voice input, and natural-language navigation to configured website pages.',
+      'Protect accounts with Google sign-in, server-verified Firebase identities, JWT authentication, and private backend API keys.',
+      'Upgrade through Razorpay test checkout with server-side signature, amount, and capture verification; hosted on Render.',
+    ],
+    stack: ['React', 'Node.js', 'Express', 'MongoDB', 'Gemini API', 'Firebase Auth', 'Razorpay'],
+  },
+  {
+    name: 'Uber (TakeME)',
+    description: 'A ride-hailing app connecting riders and captains in real time.',
+    demo: 'https://uber-video-qxht.onrender.com/',
+    source: 'https://github.com/shlk69/full-stack_projects/tree/main/uber-video',
+    points: [
+      'Book and manage trips through separate rider and captain flows, from pickup and destination search to fare estimates and ride completion.',
+      'Share ride events and live location updates through Socket.IO, with route maps visible to both riders and captains.',
+      'Manage cancellations, trip history and receipts, in-app chat, and rider reviews shown in the captain dashboard.',
+      'Support Razorpay test payments and a protected operations dashboard for rides, users, and captains; hosted on Render.',
+    ],
+    stack: ['React', 'Node.js', 'Express', 'MongoDB', 'Socket.IO', 'Mapbox', 'Razorpay'],
+  },
+];
+
 export default function Work() {
   return (
     <section id="work">
@@ -5,53 +34,35 @@ export default function Work() {
         <div className="section-head reveal">
           <div>
             <p className="kicker">Selected Work</p>
-            <h2>Systems with product muscle and engineering depth.</h2>
+            <h2>From AI conversations to real-time rides.</h2>
           </div>
           <p className="section-note">
-            Two major builds: one SaaS platform, one real-time communication product.
+            Two full stack apps with live demos: an AI assistant platform and a ride-hailing system.
           </p>
         </div>
-
         <div className="work-grid">
-          <article className="project-card tilt reveal">
-            <div className="project-top">
-              <div>
-                <h3>VA Builder</h3>
-                <p>Multi-tenant virtual assistant SaaS for business websites.</p>
+          {projects.map((project) => (
+            <article className="project-card tilt reveal" key={project.name}>
+              <div className="project-top">
+                <div>
+                  <h3>{project.name}</h3>
+                  <p>{project.description}</p>
+                </div>
+                <span className="project-tag">Live on Render</span>
               </div>
-              <span className="project-tag">2025 – 2026</span>
-            </div>
-            <ul className="project-list">
-              <li>Built an embeddable assistant that businesses can add with a single script tag.</li>
-              <li>Created a conversational site-navigation engine so users can move through a website with natural language.</li>
-              <li>Implemented JWT auth, RBAC, API rate limiting, and tenant-specific configuration for theme, tone, business name, and persona.</li>
-            </ul>
-            <div className="tech-row" aria-label="VA Builder technology stack">
-              {['MongoDB', 'Express.js', 'React', 'Node.js', 'JWT', 'REST API'].map((t) => (
-                <span className="chip" key={t}>{t}</span>
-              ))}
-            </div>
-          </article>
-
-          <article className="project-card tilt reveal">
-            <div className="project-top">
-              <div>
-                <h3>echoChat</h3>
-                <p>Real-time chat, video calls, presence, and screen sharing.</p>
+              <ul className="project-list">
+                {project.points.map((point) => <li key={point}>{point}</li>)}
+              </ul>
+              <div className="tech-row" aria-label={`${project.name} technology stack`}>
+                {project.stack.map((tech) => <span className="chip" key={tech}>{tech}</span>)}
               </div>
-              <span className="project-tag">2025 – 2026</span>
-            </div>
-            <ul className="project-list">
-              <li>Developed friend requests, WebSocket messaging, online presence, read receipts, and concurrent session support.</li>
-              <li>Integrated WebRTC for one-on-one calls, group conferences, and live screen sharing.</li>
-              <li>Designed 20+ screens, including chat, video, profiles, and admin workflows with RBAC-protected settings.</li>
-            </ul>
-            <div className="tech-row" aria-label="echoChat technology stack">
-              {['MongoDB', 'Express.js', 'React', 'Node.js', 'Socket.io', 'WebRTC'].map((t) => (
-                <span className="chip" key={t}>{t}</span>
-              ))}
-            </div>
-          </article>
+              <div className="project-actions">
+                <a className="button primary" href={project.demo} target="_blank" rel="noopener noreferrer" aria-label={`Live demo of ${project.name}`}>Live Demo <span aria-hidden="true">↗</span></a>
+                <a className="button ghost" href={project.source} target="_blank" rel="noopener noreferrer" aria-label={`Source code for ${project.name}`}>Source Code</a>
+              </div>
+              <p className="project-note">The free hosting plan may take a moment to wake up.</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>

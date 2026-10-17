@@ -606,3 +606,7 @@ footer {
     transition-duration: 0.001ms !important;
   }
 }
+
+.project-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.project-actions a:focus-visible { outline: 3px solid var(--mint, #45dbc2); outline-offset: 4px; }
+.project-card .project-note { font-size: .8rem; color: var(--muted); }
