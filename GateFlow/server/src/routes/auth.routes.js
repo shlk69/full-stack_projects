@@ -1,12 +1,13 @@
 import express from 'express'
-import { registerValidationRules, validate } from '../middleware/user.validation.js'
-import { register } from '../controllers/auth.controller.js'
+import { loginValidationRules, registerValidationRules, validate } from '../middleware/user.validation.js'
+import { loginUser, resgisterUser } from '../controllers/auth.controller.js'
 
 const authRouter = express.Router()
 
 
 
-authRouter.post('/register', registerValidationRules, validate, register)
+authRouter.post('/register', registerValidationRules, validate, resgisterUser)
+authRouter.post('/login', loginValidationRules, validate, loginUser)
 
 
 export default authRouter

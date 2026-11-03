@@ -18,7 +18,7 @@ app.get("/api/v1/health", (req, res) => {
         message: "GateFlow API is running",
     });
 });
-app.use("/api/v1/auth", authRouter);
+app.use("/api/auth", authRouter);
 app.get("/", (req, res) => {
     res.status(200).send("GateFlow server is live");
 });

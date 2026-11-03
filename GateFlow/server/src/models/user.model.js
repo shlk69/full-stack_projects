@@ -1,4 +1,3 @@
-
 import { Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
 
@@ -25,9 +24,10 @@ const userSchema = new Schema(
             ],
         },
 
+        // Keep this as passwordHash to store the final secure string in DB
         passwordHash: {
             type: String,
-            required: [true, "Password hash is required"],
+            required: [true, "Password is required"], // Updated error message for client clarity
             select: false,
         },
 
@@ -57,6 +57,13 @@ const userSchema = new Schema(
         timestamps: true,
     }
 );
+
+userSchema.pre('save', async function () {
+    const user = this;
+
+    if (!user.isModified('passwordHash')) ;
+    return await bcrypt.hash(user.passwordHash, 10);
+});
 
 userSchema.methods.comparePassword = async function (password) {
     return bcrypt.compare(password, this.passwordHash);
