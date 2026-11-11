@@ -1,6 +1,6 @@
 import { User } from "../models/user.model.js"
 import bcrypt from 'bcrypt'
-import { generateAccessToken, generateRefreshToken, hashToken } from "../utils/token.js"
+import { generateAccessToken, generateRefreshToken, hashToken, verifyRefreshToken } from "../utils/token.js"
 import crypto from 'crypto'
 import mongoose from "mongoose"
 import { RefreshSession } from "../models/refresh-session.model.js"
@@ -32,40 +32,179 @@ export const resgisterUser = async (req, res) => {
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body
-        const user = await User.findOne({ email }).select('+passwordHas')
-        if (!user || !(await user.comparePassword(password))) {
-            throw createError('Invalid email or password', 401);
+        const user = await User.findOne({ email }).select("+passwordHash")
+        const isPassMatch = user.comparePassword(password)
+        if (!user || !isPassMatch) {
+            return res.status(401).json({message:'Invalid email or password'})
         }
 
-        if (user.status === 'disables') {
-            return res.status(403).json('Your account is disabled')
+        if (user.status === 'disabled') {
+            return res.status(403).json({message:'Your accounr is disabled'})
         }
 
-
-        const sessionId = new mongoose.Types.ObjectId()
         const familyId = crypto.randomUUID()
-
-
-        const refreshToken = generateRefreshToken(user._id, sessionId)
+        const sessionId = crypto.randomUUID()
         const accessToken = generateAccessToken(user)
-        const hashedRefreshToken = hashToken(refreshToken)
+        const refreshToken = generateRefreshToken(user._id, sessionId)
+        const hashedRefresh = hashToken(refreshToken)
 
         await RefreshSession.create({
-            _id: sessionId, 
+            sessionId,
             userId: user._id,
-            tokenHash: hashedRefreshToken,
-            familyId: familyId,
-            status: "active",
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
-        });
-        user.lastLoginAt = new Date()
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true, secure: true
+            tokenHash: hashedRefresh,
+            familyId,
+            status:'active'
         })
+        user.lastLoginAt = new Date()
+        await user.save()
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,    
+            secure: true,       
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 
+        });
         return res.status(200).json({ message: 'Login successful', accessToken, user})
-
     } catch (error) {
-
+        console.log('Error while logging in user', error.message)
+        return res.status(500).json({ message: 'Internal server error' })
     }
 }
 
+export async function refresh(req, res) {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+
+        if (!refreshToken) {
+            return res.status(401).json({
+                message: "Unauthorized , please login again",
+            });
+        }
+
+        const decoded = verifyRefreshToken(refreshToken);
+
+        const tokenHash = hashToken(refreshToken);
+
+        const session = await RefreshSession.findOne({
+            tokenHash,
+            status: "active",
+            expiresAt: { $gt: new Date() },
+        });
+
+        if (!session) {
+            return res.status(401).json({
+                message: "Invalid refresh session",
+            });
+        }
+
+        const user = await User.findById(decoded.sub);
+
+        if (!user || user.status !== "active") {
+            return res.status(401).json({
+                message: "User not found or disabled",
+            });
+        }
+
+        const newSessionId = randomUUID();
+
+        const newRefreshToken = generateRefreshToken(
+            user._id,
+            newSessionId
+        );
+
+        const newAccessToken = generateAccessToken(user);
+
+        const newTokenHash = hashToken(newRefreshToken);
+
+        const updatedSession = await RefreshSession.findOneAndUpdate(
+            {
+                _id: session._id,
+                status: "active",
+                expiresAt: { $gt: new Date() },
+            },
+            {
+                $set: {
+                    status: "rotated",
+                    rotatedAt: new Date(),
+                    replacedByTokenHash: newTokenHash,
+                },
+            },
+            { new: true }
+        );
+
+        if (!updatedSession) {
+            return res.status(401).json({
+                message: "Refresh token already used",
+            });
+        }
+
+        const decodedNewToken = verifyRefreshToken(newRefreshToken);
+
+        await RefreshSession.create({
+            userId: user._id,
+            tokenHash: newTokenHash,
+            familyId: session.familyId,
+            status: "active",
+            expiresAt: new Date(decodedNewToken.exp * 1000),
+        });
+
+        res.cookie("refreshToken", newRefreshToken, refreshCookieOptions);
+
+        return res.status(200).json({
+            success: true,
+            accessToken: newAccessToken,
+            message: "Token refreshed successfully",
+        });
+
+    } catch (error) {
+        console.log('Error while refreshing the token ', error.message)
+        return res.status(500).json({message:'Internal server error'})
+    }
+}
+
+
+export async function logout(req, res) {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+
+        if (refreshToken) {
+            const tokenHash = hashToken(refreshToken);
+
+            await RefreshSession.findOneAndUpdate(
+                {
+                    tokenHash,
+                    status: "active",
+                },
+                {
+                    $set: {
+                        status: "revoked",
+                        revokedAt: new Date(),
+                    },
+                }
+            );
+        }
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/api/auth",
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Logged out successfully",
+        });
+
+    } catch (error) {
+        next(error); console.log('Error while logging out ', error.message)
+        return res.status(500).json({ message: 'Internal server error' })
+    }
+}
+
+
+export function getMe(req, res) {
+    return res.status(200).json({
+        success: true,
+        user: req.user,
+    });
+}
