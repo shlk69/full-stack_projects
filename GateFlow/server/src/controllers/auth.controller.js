@@ -1,10 +1,6 @@
 import { User } from "../models/user.model.js"
 import bcrypt from 'bcrypt'
-<<<<<<< HEAD
 import { generateAccessToken, generateRefreshToken, hashToken, verifyRefreshToken } from "../utils/token.js"
-=======
-import { generateAccessToken, generateRefreshToken, hashToken } from "../utils/token.js"
->>>>>>> ca9958a22d28f283c0ffe259d9231e0884da60c4
 import crypto from 'crypto'
 import mongoose from "mongoose"
 import { RefreshSession } from "../models/refresh-session.model.js"
@@ -163,13 +159,10 @@ export async function refresh(req, res) {
     } catch (error) {
         console.log('Error while refreshing the token ', error.message)
         return res.status(500).json({message:'Internal server error'})
-=======
->>>>>>> ca9958a22d28f283c0ffe259d9231e0884da60c4
     }
 }
 
 
-<<<<<<< HEAD
 export async function logout(req, res) {
     try {
         const refreshToken = req.cookies?.refreshToken;
@@ -216,7 +209,6 @@ export function getMe(req, res) {
         user: req.user,
     });
 }
-=======
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body
@@ -256,5 +248,3 @@ export const loginUser = async (req, res) => {
 
     }
 }
-
->>>>>>> ca9958a22d28f283c0ffe259d9231e0884da60c4
