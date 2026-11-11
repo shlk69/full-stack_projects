@@ -1,6 +1,10 @@
 import { User } from "../models/user.model.js"
 import bcrypt from 'bcrypt'
+<<<<<<< HEAD
 import { generateAccessToken, generateRefreshToken, hashToken, verifyRefreshToken } from "../utils/token.js"
+=======
+import { generateAccessToken, generateRefreshToken, hashToken } from "../utils/token.js"
+>>>>>>> ca9958a22d28f283c0ffe259d9231e0884da60c4
 import crypto from 'crypto'
 import mongoose from "mongoose"
 import { RefreshSession } from "../models/refresh-session.model.js"
@@ -25,6 +29,7 @@ export const resgisterUser = async (req, res) => {
     } catch (error) {
         console.log('Error while creating user', error.message)
         return res.status(500).json({ message: 'Internal server error' })
+<<<<<<< HEAD
     }
 }
 
@@ -158,10 +163,13 @@ export async function refresh(req, res) {
     } catch (error) {
         console.log('Error while refreshing the token ', error.message)
         return res.status(500).json({message:'Internal server error'})
+=======
+>>>>>>> ca9958a22d28f283c0ffe259d9231e0884da60c4
     }
 }
 
 
+<<<<<<< HEAD
 export async function logout(req, res) {
     try {
         const refreshToken = req.cookies?.refreshToken;
@@ -208,3 +216,45 @@ export function getMe(req, res) {
         user: req.user,
     });
 }
+=======
+export const loginUser = async (req, res) => {
+    try {
+        const { email, password } = req.body
+        const user = await User.findOne({ email }).select('+passwordHas')
+        if (!user || !(await user.comparePassword(password))) {
+            throw createError('Invalid email or password', 401);
+        }
+
+        if (user.status === 'disables') {
+            return res.status(403).json('Your account is disabled')
+        }
+
+
+        const sessionId = new mongoose.Types.ObjectId()
+        const familyId = crypto.randomUUID()
+
+
+        const refreshToken = generateRefreshToken(user._id, sessionId)
+        const accessToken = generateAccessToken(user)
+        const hashedRefreshToken = hashToken(refreshToken)
+
+        await RefreshSession.create({
+            _id: sessionId, 
+            userId: user._id,
+            tokenHash: hashedRefreshToken,
+            familyId: familyId,
+            status: "active",
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
+        });
+        user.lastLoginAt = new Date()
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true, secure: true
+        })
+        return res.status(200).json({ message: 'Login successful', accessToken, user})
+
+    } catch (error) {
+
+    }
+}
+
+>>>>>>> ca9958a22d28f283c0ffe259d9231e0884da60c4
