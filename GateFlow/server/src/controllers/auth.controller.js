@@ -25,7 +25,6 @@ export const resgisterUser = async (req, res) => {
     } catch (error) {
         console.log('Error while creating user', error.message)
         return res.status(500).json({ message: 'Internal server error' })
-<<<<<<< HEAD
     }
 }
 
@@ -208,43 +207,4 @@ export function getMe(req, res) {
         success: true,
         user: req.user,
     });
-}
-export const loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body
-        const user = await User.findOne({ email }).select('+passwordHas')
-        if (!user || !(await user.comparePassword(password))) {
-            throw createError('Invalid email or password', 401);
-        }
-
-        if (user.status === 'disables') {
-            return res.status(403).json('Your account is disabled')
-        }
-
-
-        const sessionId = new mongoose.Types.ObjectId()
-        const familyId = crypto.randomUUID()
-
-
-        const refreshToken = generateRefreshToken(user._id, sessionId)
-        const accessToken = generateAccessToken(user)
-        const hashedRefreshToken = hashToken(refreshToken)
-
-        await RefreshSession.create({
-            _id: sessionId, 
-            userId: user._id,
-            tokenHash: hashedRefreshToken,
-            familyId: familyId,
-            status: "active",
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
-        });
-        user.lastLoginAt = new Date()
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true, secure: true
-        })
-        return res.status(200).json({ message: 'Login successful', accessToken, user})
-
-    } catch (error) {
-
-    }
 }

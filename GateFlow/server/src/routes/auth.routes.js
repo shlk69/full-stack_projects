@@ -1,5 +1,5 @@
 import express from 'express'
-import { loginValidationRules, registerValidationRules, validate } from '../middleware/user.validation.js'
+import { loginValidationRules, registerValidationRules, validate } from '../validations/user.validation.js'
 import { getMe, loginUser, logout, resgisterUser } from '../controllers/auth.controller.js'
 import { authenticateUser } from '../middleware/auth.middleware.js'
 import { loginUser, resgisterUser } from '../controllers/auth.controller.js'
