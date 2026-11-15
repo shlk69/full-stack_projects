@@ -1,4 +1,4 @@
-import { body, param } from 'express-validator'
+import { body, param,validationResult } from 'express-validator'
 
 // Reusable slug rule
 const slugRule = (field) =>
@@ -11,6 +11,11 @@ const slugRule = (field) =>
 
 // 1. Create Organization Validation
 export const createOrganizationValidator = [
+    body('email')
+            .trim()
+            .notEmpty().withMessage('Email is required')
+            .isEmail().withMessage('Please provide a valid email address')
+            .normalizeEmail(),
     body('name')
         .trim()
         .notEmpty()
@@ -55,17 +60,34 @@ export const updateOrganizationValidator = [
 export const addMemberValidator = [
     param('orgId').isMongoId().withMessage('Invalid organization ID'),
 
-    body('userId')
+    body('email')
+        .trim()
         .notEmpty()
-        .withMessage('User ID is required')
-        .isMongoId()
-        .withMessage('Invalid user ID'),
+        .withMessage('Email is required')
+        .isEmail()
+        .withMessage('Please provide a valid email address')
+        .normalizeEmail(),
 
     body('role')
-        .optional()
+        .notEmpty()
+        .withMessage('Role is required')
         .isIn(['admin', 'developer', 'viewer'])
         .withMessage('Role must be admin, developer, or viewer'),
 ];
+
+export const respondToInviteValidator = [
+    body('token')
+        .trim()
+        .notEmpty()
+        .withMessage('Invitation token is required'),
+
+    body('action')
+        .notEmpty()
+        .withMessage('Action is required')
+        .isIn(['accept', 'reject'])
+        .withMessage('Action must be either accept or reject'),
+];
+
 
 // 4. Update Member Role Validation
 export const updateMemberRoleValidator = [
