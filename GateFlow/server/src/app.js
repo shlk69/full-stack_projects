@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import authRouter from "./routes/auth.routes.js";
+import orgRouter from './routes/organization.routes.js'
 
 export const app = express();
 
@@ -20,6 +21,7 @@ app.get("/api/v1/health", (req, res) => {
     });
 });
 app.use("/api/auth", authRouter);
+app.use("/api/organizations", orgRouter);
 app.get("/", (req, res) => {
     res.status(200).send("GateFlow server is live");
 });

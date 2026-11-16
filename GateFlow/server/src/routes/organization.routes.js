@@ -1,4 +1,6 @@
-import express from 'express';
+
+import express from "express";
+
 import {
     createOrganization,
     getOrganization,
@@ -7,31 +9,87 @@ import {
     deleteOrg,
     addMemberToOrg,
     respondToInvite,
-} from '../controllers/organization.controller.js';
-import { authenticateUser } from '../middleware/auth.middleware.js';
+    deleteMember,
+    updateMemberRole,
+} from "../controllers/organization.controller.js";
+
+import { authenticateUser } from "../middleware/auth.middleware.js";
+
 import {
     createOrganizationValidator,
     updateOrganizationValidator,
     addMemberValidator,
     respondToInviteValidator,
+    updateMemberRoleValidator,
     orgIdParamValidator,
+    memberParamValidator,
     orgValidate,
-} from '../validators/organization.validator.js';
+} from "../validators/organization.validation.js";
 
 const router = express.Router();
 
-// Require valid Bearer access token on all organization routes
+// All organization routes require authentication
 router.use(authenticateUser);
 
 // Organization CRUD
-router.post('/', createOrganizationValidator, orgValidate, createOrganization);
-router.get('/', getOrganization);
-router.get('/:orgId', orgIdParamValidator, orgValidate, getOrganizationById);
-router.patch('/:orgId', updateOrganizationValidator, orgValidate, updateOrg);
-router.delete('/:orgId', orgIdParamValidator, orgValidate, deleteOrg);
+router.post(
+    "/",
+    createOrganizationValidator,
+    orgValidate,
+    createOrganization
+);
 
-// Member Invitations
-router.post('/:orgId/invite', addMemberValidator, orgValidate, addMemberToOrg);
-router.post('/invitations/respond', respondToInviteValidator, orgValidate, respondToInvite);
+router.get("/", getOrganization);
+
+router.get(
+    "/:orgId",
+    orgIdParamValidator,
+    orgValidate,
+    getOrganizationById
+);
+
+router.patch(
+    "/:orgId",
+    updateOrganizationValidator,
+    orgValidate,
+    updateOrg
+);
+
+router.delete(
+    "/:orgId",
+    orgIdParamValidator,
+    orgValidate,
+    deleteOrg
+);
+
+// Invitations
+router.post(
+    "/:orgId/invite",
+    addMemberValidator,
+    orgValidate,
+    addMemberToOrg
+);
+
+router.post(
+    "/invitations/respond",
+    respondToInviteValidator,
+    orgValidate,
+    respondToInvite
+);
+
+// Member management
+router.delete(
+    "/:orgId/members/:userId",
+    memberParamValidator,
+    orgValidate,
+    deleteMember
+);
+
+router.patch(
+    "/:orgId/members/:userId",
+    updateMemberRoleValidator,
+    orgValidate,
+    updateMemberRole
+);
 
 export default router;

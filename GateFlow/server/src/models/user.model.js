@@ -24,10 +24,9 @@ const userSchema = new Schema(
             ],
         },
 
-        // Keep this as passwordHash to store the final secure string in DB
         passwordHash: {
             type: String,
-            required: [true, "Password is required"], // Updated error message for client clarity
+            required: [true, "Password is required"],
             select: false,
         },
 

@@ -1,26 +1,85 @@
 import mongoose from "mongoose"
-import { Organization } from "../models/organization.model"
-import { User } from "../models/user.model"
+import { Organization } from "../models/organization.model.js"
+import { User } from "../models/user.model.js"
+import { Invitation } from "../models/invitation.model.js";
+import crypto from 'crypto'
+import { sendInviteEmail } from "../utils/sendEmail.js";
+
+
+
+
+const generateSlug = (text) => {
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+};
 
 export const createOrganization = async (req, res) => {
     try {
-        const { name, description, slug } = rqe.body
-        const org = await Organization.create({ name, description, slug })
-        return res.status(201).json({ message: 'Organization created' })
+        const { name, description } = req.body;
+        const currentUserId = req.user?._id;
+
+        if (!currentUserId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+        let finalSlug = generateSlug(name);
+
+        if (!finalSlug) {
+            finalSlug = `org-${crypto.randomBytes(3).toString('hex')}`;
+        }
+
+        // 2. If user didn't provide a custom slug, auto-resolve collisions
+        const existingOrg = await Organization.findOne({ slug: finalSlug });
+        if (existingOrg) {
+            const suffix = crypto.randomBytes(2).toString('hex');
+            finalSlug = `${finalSlug}-${suffix}`;
+        }
+
+        // 3. Create organization
+        const org = await Organization.create({
+            name: name.trim(),
+            description,
+            slug: finalSlug,
+            owner: currentUserId,
+            members: [
+                {
+                    userId: currentUserId,
+                    role: 'owner',
+                },
+            ],
+        });
+
+        return res.status(201).json({
+            message: 'Organization created',
+            organization: org,
+        });
     } catch (error) {
-        console.log('Error while creating org ', error.message)
-        return res.status(500).json({ message: 'Internal server error' })
+        if (error.code === 11000) {
+            return res.status(409).json({ message: 'An organization with this slug already exists' });
+        }
+        console.log('Error while creating org:', error.message);
+        return res.status(500).json({ message: 'Failed to create organization' });
     }
-}
+};
+
 
 export const getOrganization = async (req, res) => {
     try {
-        const loggedInUserId = req.user?._id
-        const org = await Organization.findById(loggedInUserId)
-        if (!org) {
+        const currentUserId = req.user?._id
+
+        const organizations = await Organization.find({
+            $or: [
+                { owner: currentUserId },
+                { "members.userId": currentUserId },
+            ],
+        });
+        if (!organizations) {
             return res.status(404).json({ message: 'Organization not found' })
         }
-        return res.status(200).json({ message: 'Fetced organization', org })
+        return res.status(200).json({ message: 'Fetced organization', organizations })
     } catch (error) {
         console.log('Error while fetching the org ', error.message)
         return res.status(500).json({ message: 'Internal server error' })
@@ -34,11 +93,17 @@ export const getOrganizationById = async (req, res) => {
         if (!org) {
             return res.status(404).json({ message: 'Organization not found' })
         }
+        const isOwner = org.owner.toString() === currentUserId
+        const reqeusterMember = org.members.find((m) => m.userId.toString === currentUserId)
+        const isAdmin = reqeusterMember?.role === 'admin'
+        if (!isAdmin && !isOwner) {
+            return res.status(403).json({ message: 'Only owners and admins can see the organization data' })
+        }
         return res.status(200).json({ message: 'Fetced organization', org })
 
     } catch (error) {
         console.log('Error while fetching the org from id ', error.message)
-        return res.status(500).json({ message: 'Internal server error' ,data:org})
+        return res.status(500).json({ message: 'Unable to fetch th organization' })
 
     }
 }
@@ -89,7 +154,7 @@ export const updateOrg = async (req, res) => {
         )
 
         if (!updatedOrg) {
-            return res.status(404).json({ message: 'Organization not found or Unauthorized',data:updatedOrg })
+            return res.status(404).json({ message: 'Organization not found or Unauthorized', data: updatedOrg })
         }
 
         return res.status(200).json({ message: 'Organization updated successfully' })
@@ -99,8 +164,6 @@ export const updateOrg = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' })
     }
 }
-
-
 
 export const addMemberToOrg = async (req, res) => {
     try {
@@ -181,7 +244,6 @@ export const addMemberToOrg = async (req, res) => {
     }
 };
 
-// 2. Invited user accepts or rejects from the email link
 export const respondToInvite = async (req, res) => {
     try {
         const { token, action } = req.body; // 'accept' or 'reject'
@@ -223,3 +285,77 @@ export const respondToInvite = async (req, res) => {
         return res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+
+export const deleteMember = async (req, res) => {
+    try {
+        const { orgId, userId } = req.params
+        const currentUserId = (req.user._id || req.user.id).toString();
+        const org = await Organization.findById(orgId)
+        if (!org) {
+            return res.status(404).json({ message: 'Organization not found' })
+        }
+        const isOwner = org.owner.toString() === currentUserId
+        const reqeusterMember = org.members.find((m) => m.userId.toString() === currentUserId)
+        const isAdmin = reqeusterMember?.role === 'admin'
+        if (!isOwner && !isAdmin) {
+            return res.status(400).json({ message: 'Only owners and admins can remove members' })
+        }
+
+        const targetUser = org.members.some((m) => m.userId.toString() === userId)
+        if (!targetUser) {
+            return res.status(404).json({ message: 'Member not found in this organization' })
+        }
+
+        if (org.owner?.toString() === userId) {
+            return res.status(400).json({ message: 'Canno remove the organization owner' })
+        }
+
+        await Organization.findByIdAndUpdate(orgId, {
+            $pull: { members: { userId: userId } }
+        })
+        return res.status(200).json({ message: "Member removed successfully" });
+    } catch (error) {
+        console.log('error while removing member ', error.message)
+        return res.status(500).json({ message: 'Unable to remove members' })
+    }
+}
+
+export const updateMemberRole = async (req, res) => {
+    try {
+        const { orgId, userId } = req.params
+        const { role } = req.body
+        const currentUserId = req.user._id.toString()
+        const org = await Organization.findById(orgId)
+        if (!org) {
+            return res.status(404).json({ message: 'Organization not found' })
+        }
+
+        const isOwner = org.owner.toString() === currentUserId
+        const reqeusterMember = org.members.find((m) => m.userId.toString() === currentUserId)
+        const isAdmin = reqeusterMember?.role === 'admin'
+        if (!isOwner && !isAdmin) {
+            return res.status(403).json({ message: "Only owners and admins can update member's role" })
+        }
+
+        const targetUser = org.members.some((m) => m.userId.toString() === userId)
+        if (!targetUser) {
+            return res.status(404).json({ message: "Member doesn't exist" })
+        }
+
+        if (reqeusterMember.userId.toString() === userId) {
+            return res.status(403).json({ message: "Only organization can change admin's role" })
+        }
+        const updatedMember = await Organization.findOneAndUpdate({ _id: orgId, 'members.userId': userId },
+            {
+                $set: { 'members.$.role': role }
+            },
+            { new: true }
+        )
+        return res.status(200).json({ message: 'Member role updated successfully ', members: updatedMember.members })
+
+    } catch (error) {
+        console.log('error while updating a member role ', error.message)
+        return res.status(500).json({ message: 'Unable to update a member role ' })
+    }
+}
