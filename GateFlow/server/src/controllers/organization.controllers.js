@@ -154,10 +154,10 @@ export const updateOrg = async (req, res) => {
         )
 
         if (!updatedOrg) {
-            return res.status(404).json({ message: 'Organization not found or Unauthorized', data: updatedOrg })
+            return res.status(404).json({ message: 'Organization not found or Unauthorized'})
         }
 
-        return res.status(200).json({ message: 'Organization updated successfully' })
+        return res.status(200).json({ message: 'Organization updated successfully', data: updatedOrg })
 
     } catch (error) {
         console.log('error while updating organization ', error.message)
