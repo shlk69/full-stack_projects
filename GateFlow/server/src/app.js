@@ -6,6 +6,9 @@ import authRouter from "./routes/auth.routes.js";
 import orgRouter from './routes/organization.routes.js'
 import projectRouter from "./routes/project.routes.js";
 import environmenRouter from './routes/environment.routes.js'
+import apiConfigRouter from './routes/api-configuration.routes.js'
+import apiKeyRouter from './routes/api-key.routes.js'
+
 
 export const app = express();
 
@@ -28,6 +31,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/organizations", orgRouter);
 app.use("/api", projectRouter);
 app.use("/api", environmenRouter);
+app.use("/api/", apiConfigRouter);
+app.use("/api/", apiKeyRouter);
 
 
 app.get("/", (req, res) => {
