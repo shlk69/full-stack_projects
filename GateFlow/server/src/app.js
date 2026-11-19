@@ -5,6 +5,7 @@ import helmet from "helmet";
 import authRouter from "./routes/auth.routes.js";
 import orgRouter from './routes/organization.routes.js'
 import projectRouter from "./routes/project.routes.js";
+import environmenRouter from './routes/environment.routes.js'
 
 export const app = express();
 
@@ -25,7 +26,8 @@ app.get("/api/v1/health", (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/organizations", orgRouter);
-app.use("/api/", projectRouter);
+app.use("/api", projectRouter);
+app.use("/api", environmenRouter);
 
 
 app.get("/", (req, res) => {
