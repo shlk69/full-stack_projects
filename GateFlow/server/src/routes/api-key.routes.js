@@ -13,7 +13,7 @@ import {
     validateEnvironmentId,
     validateApiKeyId,
     createApiKeyValidation,
-} from "../validators/api-key.validation.js";
+} from "../validations/api-key.validations.js";
 
 import { authenticateUser } from "../middleware/auth.middleware.js";
 

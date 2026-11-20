@@ -11,7 +11,7 @@ import {
     respondToInvite,
     deleteMember,
     updateMemberRole,
-} from "../controllers/organization.controller.js";
+} from "../controllers/organization.controllers.js";
 
 import { authenticateUser } from "../middleware/auth.middleware.js";
 
@@ -24,7 +24,7 @@ import {
     orgIdParamValidator,
     memberParamValidator,
     orgValidate,
-} from "../validators/organization.validation.js";
+} from "../validations/organization.validation.js";
 
 const router = express.Router();
 

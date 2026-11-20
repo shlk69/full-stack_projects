@@ -2,6 +2,7 @@
 import "dotenv/config";
 import { app } from "./app.js";
 import { connectDB } from "./config/db.js";
+import { redis } from "./config/redis.js";
 
 const port = Number(process.env.PORT) || 3001;
 
@@ -18,4 +19,15 @@ async function startServer() {
     }
 }
 
+const testRedis = async () => {
+    try {
+        const response = await redis.ping();
+        console.log("Redis ping response:", response);
+    } catch (error) {
+        console.error("Redis test failed:", error.message);
+    }
+};
+
+
 startServer();
+testRedis();

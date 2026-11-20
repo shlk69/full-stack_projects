@@ -30,7 +30,7 @@ const organizationSchema = new mongoose.Schema(
         },
         slug: {
             type: String,
-            required: [true, 'Slug is required'],
+            required: true,
             unique: true,
             lowercase: true,
             trim: true,
@@ -60,8 +60,6 @@ const organizationSchema = new mongoose.Schema(
     }
 );
 
-// Index for faster lookups by slug and member userId
-organizationSchema.index({ slug: 1 });
 organizationSchema.index({ 'members.userId': 1 });
 
 export const Organization = mongoose.model('Organization', organizationSchema);

@@ -6,7 +6,7 @@ import {
     getProjectbyId,
     updateProject,
     deleteProject,
-} from "../controllers/project.controller.js";
+} from "../controllers/project.controllers.js";
 
 import { authenticateUser } from "../middleware/auth.middleware.js";
 
@@ -16,7 +16,7 @@ import {
     createProjectValidator,
     updateProjectValidator,
     projectValidate,
-} from "../validators/project.validation.js";
+} from "../validations/project.validations.js";
 
 const router = express.Router();
 

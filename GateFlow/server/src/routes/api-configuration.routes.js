@@ -13,7 +13,7 @@ import {
     validateApiId,
     createApiConfigurationValidation,
     updateApiConfigurationValidation,
-} from "../validators/api-configuration.validation.js";
+} from "../validations/api-configuration.validation.js";
 
 import { authenticateUser } from "../middleware/auth.middleware.js";
 

@@ -6,7 +6,7 @@ import {
     getEnvironmentById,
     updateEnvironment,
     deleteEnvironment,
-} from "../controllers/environment.controller.js";
+} from "../controllers/environment.controllers.js";
 
 import { authenticateUser } from "../middleware/auth.middleware.js";
 
@@ -16,7 +16,7 @@ import {
     createEnvironmentValidator,
     updateEnvironmentValidator,
     environmentValidate,
-} from "../validators/environment.validation.js";
+} from "../validations/environment.validations.js";
 
 const router = express.Router();
 

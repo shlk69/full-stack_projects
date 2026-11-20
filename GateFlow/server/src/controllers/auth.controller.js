@@ -2,7 +2,6 @@ import { User } from "../models/user.model.js"
 import bcrypt from 'bcrypt'
 import { generateAccessToken, generateRefreshToken, hashToken, verifyRefreshToken } from "../utils/token.js"
 import crypto from 'crypto'
-import mongoose from "mongoose"
 import { RefreshSession } from "../models/refresh-session.model.js"
 
 

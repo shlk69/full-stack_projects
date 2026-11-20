@@ -27,12 +27,14 @@ app.get("/api/v1/health", (req, res) => {
 });
 
 
-app.use("/api/auth", authRouter);
-app.use("/api/organizations", orgRouter);
-app.use("/api", projectRouter);
-app.use("/api", environmenRouter);
-app.use("/api/", apiConfigRouter);
-app.use("/api/", apiKeyRouter);
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/organizations", orgRouter);
+app.use("/api/v1", projectRouter);
+app.use("/api/v1", environmenRouter);
+app.use("/api/v1", apiConfigRouter);
+app.use("/api/v1", apiKeyRouter);
+app.use("/api/v1", apiKeyRouter);
+// app.use('/gateway'.gatewayRouter)
 
 
 app.get("/", (req, res) => {
