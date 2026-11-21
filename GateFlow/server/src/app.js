@@ -8,6 +8,7 @@ import projectRouter from "./routes/project.routes.js";
 import environmenRouter from './routes/environment.routes.js'
 import apiConfigRouter from './routes/api-configuration.routes.js'
 import apiKeyRouter from './routes/api-key.routes.js'
+import gatewayRouter from './gateway/gateway.routes.js'
 
 
 export const app = express();
@@ -34,7 +35,7 @@ app.use("/api/v1", environmenRouter);
 app.use("/api/v1", apiConfigRouter);
 app.use("/api/v1", apiKeyRouter);
 app.use("/api/v1", apiKeyRouter);
-// app.use('/gateway'.gatewayRouter)
+app.use('/gateway',gatewayRouter)
 
 
 app.get("/", (req, res) => {
